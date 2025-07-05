@@ -40,20 +40,19 @@ class DependencyBuilder:
 
         return league_dep
 
-    def build_matchup_dependency(self):
+    def build_matchup_dependency(self, week: int):
         if self.box_score is None:
             quit()
 
-        if self.box_score.away_team == self.team_id:
-            team = self.box_score.away_lineup
-            team_projected = self.box_score.away_projected
-            opponent = self.box_score.home_lineup
-            opponent_projected = self.box_score.home_projected
-        else:
-            opponent = self.box_score.away_lineup
-            opponent_projected = self.box_score.away_projected
-            team = self.box_score.home_lineup
-            team_projected = self.box_score.home_projected
+        is_away = self.box_score.away_team == self.team_id
+        team = self.box_score.away_lineup if is_away else self.box_score.home_lineup
+        team_projected = (
+            self.box_score.away_projected if is_away else self.box_score.home_projected
+        )
+        opponent = self.box_score.home_lineup if is_away else self.box_score.away_lineup
+        opponent_projected = (
+            self.box_score.home_projected if is_away else self.box_score.away_projected
+        )
 
         team_weekly_player_list = [self.__convert_box_player(player) for player in team]
 
@@ -62,7 +61,7 @@ class DependencyBuilder:
         ]
 
         matchup_dep = MatchupDep(
-            matchup_period=0,
+            matchup_period=week,
             is_playoff_match=self.box_score.is_playoff,
             my_team=team_weekly_player_list,
             my_team_projected_points=team_projected,
@@ -104,13 +103,4 @@ class DependencyBuilder:
 
     @staticmethod
     def __convert_scoring_format(scoring_format: List[dict]) -> List[ScoringRules]:
-        scoring_rules_list = []
-        for scoring in scoring_format:
-            scoring_rule = ScoringRules(
-                abbr=scoring["abbr"],
-                label=scoring["label"],
-                id=str(scoring["id"]),
-                points=scoring["points"],
-            )
-            scoring_rules_list.append(scoring_rule)
-        return scoring_rules_list
+        return [ScoringRules(**scoring) for scoring in scoring_format]

@@ -26,7 +26,7 @@ class ScoringRules:
 
     abbr: str = Field(..., description="Abbreviated identifier for the rule.")
     label: str = Field(..., description="Human-readable description of the rule.")
-    id: str = Field(..., description="")
+    id: int = Field(..., description="")
     points: float = Field(
         ..., description="How many points are awarded based on the rule."
     )

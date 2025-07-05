@@ -39,7 +39,7 @@ def build_inputs():
     )
 
     league_dep = builder.build_league_dependency()
-    matchup_dep = builder.build_matchup_dependency()
+    matchup_dep = builder.build_matchup_dependency(_week)
 
     return league_dep, matchup_dep
 
