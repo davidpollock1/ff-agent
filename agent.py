@@ -32,9 +32,22 @@ agent = Agent(
     # model_settings="",
     output_type=LineupRecommendationOutput,
     deps_type=AgentDependencies,
-    tools=[],
     system_prompt=(system_prompt_text),
 )
+
+
+@agent.tool
+def get_my_roster(ctx: RunContext[AgentDependencies]) -> MatchupDep:
+    """Get the match up data for the current matchup period."""
+    matchup = ctx.deps.matchup_dep
+    return matchup
+
+
+@agent.tool
+def get_league_settings(ctx: RunContext[AgentDependencies]) -> LeagueDep:
+    """Get the league and league settings."""
+    league = ctx.deps.league_dep
+    return league
 
 
 async def run_agent(league_dep, matchup_dep, prompt):
