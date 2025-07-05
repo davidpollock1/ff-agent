@@ -56,6 +56,5 @@ async def run_agent(league_dep, matchup_dep, prompt):
 
     dependencies = AgentDependencies(league_dep=league, matchup_dep=matchup)
 
-    print(dependencies)
     result = await agent.run(user_prompt=prompt, deps=dependencies)
     return result

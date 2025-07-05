@@ -12,9 +12,6 @@ class PositionSlot:
     max_allowed: int = Field(
         ..., description="Maximum number of players allowed in this slot."
     )
-    # eligible_positions: List[str] = Field(
-    #     ..., description="List of positions eligible for this position slot."
-    # )
     is_starting_slot: bool = Field(
         ..., description="True if this is a scoring position."
     )
