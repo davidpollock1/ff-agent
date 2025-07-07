@@ -8,48 +8,50 @@ from typing import List, Optional
 class PositionSlot:
     """A slot on a fantasy football roster."""
 
-    name: str = Field(..., description="Abbreviated name of the position slot.")
+    name: str = Field(..., description="Abbreviated name of the roster position slot.")
     max_allowed: int = Field(
-        ..., description="Maximum number of players allowed in this slot."
+        ..., description="Maximum number of players that can occupy this roster slot."
     )
     is_starting_slot: bool = Field(
-        ..., description="True if this is a scoring position."
+        ..., description="Whether this slot contributes to weekly scoring."
     )
 
 
 @dataclass
 class ScoringRules:
-    """The scoring rules for the league"""
+    """The scoring rules for the league."""
 
-    abbr: str = Field(..., description="Abbreviated identifier for the rule.")
-    label: str = Field(..., description="Human-readable description of the rule.")
-    id: int = Field(..., description="")
+    abbr: str = Field(..., description="Abbreviated identifier for the scoring rule.")
+    label: str = Field(
+        ..., description="Human-readable description of the scoring rule."
+    )
+    id: int = Field(..., description="Unique identifier for the scoring rule.")
     points: float = Field(
-        ..., description="How many points are awarded based on the rule."
+        ..., description="Point value awarded when this scoring condition is met."
     )
 
 
 @dataclass
 class LeagueDep:
-    """"""
+    """League configuration and settings."""
 
     playoff_matchup_period_length: int
     playoff_seed_tie_rule: str
     scoring_type: str
     matchup_periods: dict = Field(
         ...,
-        description="A dictionary where the key is the matchup period, and the value is the list of weeks inside that matchup period.",
+        description="Mapping of matchup periods to their constituent weeks.",
     )
     scoring_format: List[ScoringRules] = Field(
         ...,
-        description="A list of rules for scoring in the current fantasy football league.",
+        description="Complete set of scoring rules for this fantasy league.",
     )
     regular_season_games_count: int = Field(
         ...,
-        description="Number of games in the regular season for the current fantasy football league.",
+        description="Total number of regular season matchups in this league.",
     )
     position_slots: List[PositionSlot] = Field(
-        ..., description="A list containing all eligible slots on my roster."
+        ..., description="Available roster positions and their constraints."
     )
 
 
@@ -57,52 +59,54 @@ class LeagueDep:
 class WeeklyPlayerProfileDep:
     """Represents a single player's profile and projections for the current fantasy week."""
 
-    name: str = Field(..., description="Player's name.")
-    on_bye_week: bool = Field(..., description="True if the player is on bye week.")
-    position: str = Field(..., description="Player's professional position.")
-    injured: bool = Field(..., description="True if a player is injured.")
-    position_rank: List | None = Field(..., description="")
+    name: str = Field(..., description="Player's full name.")
+    on_bye_week: bool = Field(
+        ..., description="Whether the player's NFL team has a bye this week."
+    )
+    position: str = Field(..., description="Player's primary NFL position.")
+    injured: bool = Field(..., description="Whether the player is currently injured.")
+    position_rank: List | None = Field(
+        ..., description="Player's positional ranking data."
+    )
 
     game_date: Optional[datetime] | None = Field(
-        description="The start time of the professional game to be played."
+        description="Scheduled start time of the player's NFL game."
     )
     active_status: str = Field(
         ...,
-        description="'active' if a player is available to play in the current week.",
+        description="Player's roster status ('active' if available to play).",
     )
     projected_points: float = Field(
-        ..., description="Expected fantasy points for the current week."
+        ..., description="Forecasted fantasy points for the current week."
     )
-    lineup_slot: str = Field(
-        ..., description="Current position slot the player occupies."
-    )
+    lineup_slot: str = Field(..., description="Current roster position assignment.")
     eligible_slots: List[str] = Field(
-        ..., description="List of position slot names this player can be assigned to."
+        ..., description="Roster positions this player can be assigned to."
     )
     professional_opponent: str = Field(
-        description="The team the player is going against. "
+        description="Opposing NFL team for this week's matchup."
     )
 
 
 @dataclass
 class MatchupDep:
-    is_playoff_match: bool = Field(..., description="True if playoff match.")
-    matchup_period: int = Field(
-        ..., description="The current match period represented by an integer."
+    is_playoff_match: bool = Field(
+        ..., description="Whether this is a playoff matchup."
     )
+    matchup_period: int = Field(..., description="Current matchup period identifier.")
     my_team: List[WeeklyPlayerProfileDep] = Field(
         ...,
-        description="List of WeeklyPlayerProfile objects for all players currently on my team.",
+        description="Complete roster of players on the user's fantasy team.",
     )
     my_team_projected_points: float = Field(
         ...,
-        description="The number of points ESPN Fantasy Football thinks my team will score based on the current lineup.",
+        description="Total projected fantasy points for the user's current lineup.",
     )
     opponent_team: List[WeeklyPlayerProfileDep] = Field(
         ...,
-        description="List of WeeklyPlayerProfile objects for all players currently on my opponents team.",
+        description="Complete roster of players on the opponent's fantasy team.",
     )
     opponent_team_projected_points: float = Field(
         ...,
-        description="The number of points ESPN Fantasy Football thinks my opponents team will score based on the current lineup.",
+        description="Total projected fantasy points for the opponent's current lineup.",
     )
