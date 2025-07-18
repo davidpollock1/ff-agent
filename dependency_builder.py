@@ -49,12 +49,11 @@ class DependencyBuilder:
         team_projected = (
             self.box_score.away_projected if is_away else self.box_score.home_projected
         )
-        opponent = self.box_score.home_lineup if is_away else self.box_score.away_lineup
         opponent_projected = (
             self.box_score.home_projected if is_away else self.box_score.away_projected
         )
 
-        all_player_ids = [player.playerId for player in team + opponent]
+        all_player_ids = [player.playerId for player in team]
         players_result = self.espn_league.player_info(playerId=all_player_ids)
 
         all_players_info = players_result if isinstance(players_result, list) else []
@@ -67,17 +66,11 @@ class DependencyBuilder:
             for player in team
         ]
 
-        opponent_weekly_player_list = [
-            self.__convert_box_player(player, player_info_lookup.get(player.playerId))
-            for player in opponent
-        ]
-
         matchup_dep = MatchupDep(
             matchup_period=week,
             is_playoff_match=self.box_score.is_playoff,
             my_team=team_weekly_player_list,
             my_team_projected_points=team_projected,
-            opponent_team=opponent_weekly_player_list,
             opponent_team_projected_points=opponent_projected,
         )
 

@@ -105,10 +105,6 @@ class MatchupDep:
         ...,
         description="Total projected fantasy points for the user's current lineup.",
     )
-    opponent_team: List[WeeklyPlayerProfileDep] = Field(
-        ...,
-        description="Complete roster of players on the opponent's fantasy team.",
-    )
     opponent_team_projected_points: float = Field(
         ...,
         description="Total projected fantasy points for the opponent's current lineup.",
