@@ -54,10 +54,22 @@ class DependencyBuilder:
             self.box_score.home_projected if is_away else self.box_score.away_projected
         )
 
-        team_weekly_player_list = [self.__convert_box_player(player) for player in team]
+        all_player_ids = [player.playerId for player in team + opponent]
+        players_result = self.espn_league.player_info(playerId=all_player_ids)
+
+        all_players_info = players_result if isinstance(players_result, list) else []
+        player_info_lookup = {
+            player.playerId: player.proTeam for player in all_players_info
+        }
+
+        team_weekly_player_list = [
+            self.__convert_box_player(player, player_info_lookup.get(player.playerId))
+            for player in team
+        ]
 
         opponent_weekly_player_list = [
-            self.__convert_box_player(player) for player in opponent
+            self.__convert_box_player(player, player_info_lookup.get(player.playerId))
+            for player in opponent
         ]
 
         matchup_dep = MatchupDep(
@@ -86,7 +98,7 @@ class DependencyBuilder:
         return position_slots
 
     @staticmethod
-    def __convert_box_player(box_player: BoxPlayer):
+    def __convert_box_player(box_player: BoxPlayer, pro_team: str | None):
         return WeeklyPlayerProfileDep(
             name=box_player.name,
             active_status=box_player.active_status,
@@ -99,6 +111,7 @@ class DependencyBuilder:
             projected_points=box_player.projected_points,
             position_rank=box_player.posRank,
             professional_opponent="",
+            profession_team=pro_team,
         )
 
     @staticmethod

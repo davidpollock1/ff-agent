@@ -86,6 +86,9 @@ class WeeklyPlayerProfileDep:
     professional_opponent: str = Field(
         description="Opposing NFL team for this week's matchup."
     )
+    profession_team: Optional[str] = Field(
+        description="Current professional team for this player. "
+    )
 
 
 @dataclass
