@@ -1,5 +1,7 @@
 import asyncio
+from typing import Tuple
 from dependency_builder import DependencyBuilder
+from models import LeagueDep, MatchupDep
 from espn_api.football import League
 from dotenv import load_dotenv
 from agent import run_agent
@@ -17,7 +19,7 @@ _week = 12
 _year = 2024
 
 
-def build_inputs():
+def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
     league: League = League(
         league_id=int(_leagueId), year=_year, espn_s2=_espnS2, swid=_swid
     )
@@ -44,7 +46,7 @@ def build_inputs():
     return league_dep, matchup_dep
 
 
-def main():
+def main() -> None:
     league_dep, matchup_dep = build_inputs()
     result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
     print(result)

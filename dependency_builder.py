@@ -19,7 +19,7 @@ class DependencyBuilder:
         self.box_score = espn_box_score
         self.team_id = team_id
 
-    def build_league_dependency(self):
+    def build_league_dependency(self) -> LeagueDep:
         settings = cast(Settings, self.espn_league.settings)
         position_slots: List[PositionSlot] = self.__convert_position_slots(
             settings.position_slot_counts
@@ -40,7 +40,7 @@ class DependencyBuilder:
 
         return league_dep
 
-    def build_matchup_dependency(self, week: int):
+    def build_matchup_dependency(self, week: int) -> MatchupDep:
         if self.box_score is None:
             quit()
 
