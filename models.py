@@ -35,23 +35,30 @@ class ScoringRules:
 class LeagueDep:
     """League configuration and settings."""
 
-    playoff_matchup_period_length: int
-    playoff_seed_tie_rule: str
-    scoring_type: str
-    matchup_periods: dict = Field(
-        ...,
+    playoff_matchup_period_length: Optional[int] = Field(
+        default=None,
+        description="Number of weeks each playoff matchup lasts. Optional; defaults to None.",
+    )
+    playoff_seed_tie_rule: Optional[str] = Field(
+        default=None, description="Tie breaker for playoff seed. "
+    )
+    scoring_type: Optional[str] = Field(
+        default=None, description="Scoring type, like PPR."
+    )
+    matchup_periods: Optional[dict] = Field(
+        default=None,
         description="Mapping of matchup periods to their constituent weeks.",
     )
-    scoring_format: List[ScoringRules] = Field(
-        ...,
+    scoring_format: Optional[List[ScoringRules]] = Field(
+        default=None,
         description="Complete set of scoring rules for this fantasy league.",
     )
-    regular_season_games_count: int = Field(
-        ...,
+    regular_season_games_count: Optional[int] = Field(
+        default=None,
         description="Total number of regular season matchups in this league.",
     )
-    position_slots: List[PositionSlot] = Field(
-        ..., description="Available roster positions and their constraints."
+    position_slots: Optional[List[PositionSlot]] = Field(
+        default=None, description="Available roster positions and their constraints."
     )
 
 
@@ -101,28 +108,32 @@ class WeeklyPlayerProfileDep:
         description="Current professional team for this player. "
     )
     professional_team_odds_set: Optional[List[Odds]] = Field(
-        description="List of current betting odds related to the player's professional team for this week's game."
+        default_factory=list,
+        description="List of current betting odds related to the player's professional team for this week's game.",
     )
     player_odds_set: Optional[List[Odds]] = Field(
-        description="List of current betting odds specific to this player's individual performance for the current week."
+        default_factory=list,
+        description="List of current betting odds specific to this player's individual performance for the current week.",
     )
 
 
 @dataclass
 class MatchupDep:
-    is_playoff_match: bool = Field(
-        ..., description="Whether this is a playoff matchup."
+    is_playoff_match: Optional[bool] = Field(
+        default=None, description="Whether this is a playoff matchup."
     )
-    matchup_period: int = Field(..., description="Current matchup period identifier.")
-    my_team: List[WeeklyPlayerProfileDep] = Field(
-        ...,
+    matchup_period: Optional[int] = Field(
+        default=None, description="Current matchup period identifier."
+    )
+    my_team: Optional[List[WeeklyPlayerProfileDep]] = Field(
+        default=None,
         description="Complete roster of players on the user's fantasy team.",
     )
-    my_team_projected_points: float = Field(
-        ...,
+    my_team_projected_points: Optional[float] = Field(
+        default=None,
         description="Total projected fantasy points for the user's current lineup.",
     )
-    opponent_team_projected_points: float = Field(
-        ...,
+    opponent_team_projected_points: Optional[float] = Field(
+        default=None,
         description="Total projected fantasy points for the opponent's current lineup.",
     )

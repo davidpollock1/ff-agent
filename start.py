@@ -40,14 +40,16 @@ def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
         espn_league=league, espn_box_score=box_score, team_id=_teamId
     )
 
-    league_dep = builder.build_league_dependency()
-    matchup_dep = builder.build_matchup_dependency(_week)
+    builder.with_league_dependency().with_matchup_dependency(
+        _week
+    ).with_betting_odds_data()
 
-    return league_dep, matchup_dep
+    return builder._league_dep, builder._matchup_dep
 
 
 def main() -> None:
     league_dep, matchup_dep = build_inputs()
+    print(league_dep, matchup_dep)
     result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
     print(result)
 

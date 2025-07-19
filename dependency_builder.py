@@ -2,9 +2,14 @@ from typing import List, cast
 from espn_api.football import League
 from espn_api.football.box_score import BoxScore, BoxPlayer
 from espn_api.football.settings import Settings
+from clients.DTOs.odds_api_dtos import EventOddsResponse
+from clients.sports_odds_api_client import SportsOddsApiClient
+from datetime import datetime, timedelta
+from constants import team_map
 from models import (
     LeagueDep,
     MatchupDep,
+    Odds,
     WeeklyPlayerProfileDep,
     PositionSlot,
     ScoringRules,
@@ -18,8 +23,11 @@ class DependencyBuilder:
         self.espn_league = espn_league
         self.box_score = espn_box_score
         self.team_id = team_id
+        self.odds_api_client = SportsOddsApiClient()
+        self._league_dep = LeagueDep()
+        self._matchup_dep = MatchupDep()
 
-    def build_league_dependency(self) -> LeagueDep:
+    def with_league_dependency(self):
         settings = cast(Settings, self.espn_league.settings)
         position_slots: List[PositionSlot] = self.__convert_position_slots(
             settings.position_slot_counts
@@ -28,7 +36,7 @@ class DependencyBuilder:
             settings.scoring_format
         )
 
-        league_dep = LeagueDep(
+        self._league_dep = LeagueDep(
             matchup_periods=settings.matchup_periods,
             scoring_format=scoring_format,
             scoring_type=settings.scoring_type,
@@ -38,9 +46,9 @@ class DependencyBuilder:
             playoff_seed_tie_rule=settings.playoff_seed_tie_rule,
         )
 
-        return league_dep
+        return self
 
-    def build_matchup_dependency(self, week: int) -> MatchupDep:
+    def with_matchup_dependency(self, week: int):
         if self.box_score is None:
             quit()
 
@@ -66,7 +74,7 @@ class DependencyBuilder:
             for player in team
         ]
 
-        matchup_dep = MatchupDep(
+        self._matchup_dep = MatchupDep(
             matchup_period=week,
             is_playoff_match=self.box_score.is_playoff,
             my_team=team_weekly_player_list,
@@ -74,7 +82,32 @@ class DependencyBuilder:
             opponent_team_projected_points=opponent_projected,
         )
 
-        return matchup_dep
+        return self
+
+    def with_betting_odds_data(self):
+        events_response = self.odds_api_client.get_events(
+            datetime(2025, 8, 1),
+            datetime(2025, 9, 10),  # self.__next_tuesday_1201am()
+        )
+
+        if self._matchup_dep.my_team is None or events_response is None:
+            return self
+
+        event_lookup_by_team = {}
+        if events_response is not None and events_response.events:
+            for event in events_response.events:
+                event_lookup_by_team[event.home_team] = event.id
+                event_lookup_by_team[event.away_team] = event.id
+
+        for wpp in self._matchup_dep.my_team:
+            pro_team = team_map[wpp.professional_team or ""]
+            event_id = event_lookup_by_team.get(pro_team)
+            odds = self.__convert_odds(
+                self.odds_api_client.get_team_totals_odds_for_event(event_id)
+            )
+            wpp.professional_team_odds_set = odds
+
+        return self
 
     @staticmethod
     def __convert_position_slots(position_slot_counts: dict) -> List[PositionSlot]:
@@ -104,9 +137,33 @@ class DependencyBuilder:
             projected_points=box_player.projected_points,
             position_rank=box_player.posRank,
             professional_opponent="",
-            profession_team=pro_team,
+            professional_team=pro_team,
         )
 
     @staticmethod
     def __convert_scoring_format(scoring_format: List[dict]) -> List[ScoringRules]:
         return [ScoringRules(**scoring) for scoring in scoring_format]
+
+    @staticmethod
+    def __convert_odds(event_odds_response: EventOddsResponse) -> List[Odds]:
+        odds_list = []
+        if (
+            event_odds_response.bookmakers
+            and len(event_odds_response.bookmakers) > 0
+            and event_odds_response.bookmakers[0].markets
+            and len(event_odds_response.bookmakers[0].markets) > 0
+        ):
+            for outcome in event_odds_response.bookmakers[0].markets[0].outcomes:
+                odds = Odds(type=outcome.name, price=outcome.price, point=outcome.point)
+                odds_list.append(odds)
+
+        return odds_list
+
+    @staticmethod
+    def __next_tuesday_1201am():
+        now = datetime.now()
+        days_ahead = (1 - now.weekday() + 7) % 7  # 1 is Tuesday (Monday=0)
+        if days_ahead == 0:
+            days_ahead = 7
+        next_tuesday = now + timedelta(days=days_ahead)
+        return next_tuesday.replace(hour=0, minute=1, second=0, microsecond=0)

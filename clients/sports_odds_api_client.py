@@ -2,7 +2,7 @@ import os
 import httpx
 from urllib.parse import quote
 from datetime import datetime
-from DTOs.odds_api_dtos import NFLEvent, NFLEventResponse, EventOddsResponse
+from .DTOs.odds_api_dtos import NFLEvent, NFLEventResponse, EventOddsResponse
 
 _ODDS_BASE_URL = os.getenv("ODDS_API_BASE_URL")
 _ODDS_API_KEY = os.getenv("ODDS_API_KEY")
@@ -44,13 +44,13 @@ class SportsOddsApiClient:
         return EventOddsResponse()
 
 
-if __name__ == "__main__":
-    sports_odds_client = SportsOddsApiClient()
+# if __name__ == "__main__":
+#     sports_odds_client = SportsOddsApiClient()
 
-    from_time = datetime(2025, 9, 1)
-    to_time = datetime(2025, 9, 16)
+#     from_time = datetime(2025, 9, 1)
+#     to_time = datetime(2025, 9, 16)
 
-    # response = sports_odds_client.get_events(from_time, to_time)
-    response = sports_odds_client.get_team_totals_odds_for_event(
-        event_id="c6d7807cee33d5e81c671527b9c8b3f1"
-    )
+#     # response = sports_odds_client.get_events(from_time, to_time)
+#     response = sports_odds_client.get_team_totals_odds_for_event(
+#         event_id="c6d7807cee33d5e81c671527b9c8b3f1"
+#     )
