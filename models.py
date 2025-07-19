@@ -56,6 +56,17 @@ class LeagueDep:
 
 
 @dataclass
+class Odds:
+    type: str = Field(description="Type of betting odd represented. ")
+    price: int = Field(
+        description="The betting line (e.g., -110 or +150), representing the amount you must wager to win $100 (negative) or the amount you win on a $100 bet (positive)."
+    )
+    point: float = Field(
+        description="The number of points associated with this betting odd, representing the predicted margin or total for the wager (e.g., point spread or over/under value)."
+    )
+
+
+@dataclass
 class WeeklyPlayerProfileDep:
     """Represents a single player's profile and projections for the current fantasy week."""
 
@@ -83,11 +94,17 @@ class WeeklyPlayerProfileDep:
     eligible_slots: List[str] = Field(
         ..., description="Roster positions this player can be assigned to."
     )
-    professional_opponent: str = Field(
+    professional_opponent: Optional[str] = Field(
         description="Opposing NFL team for this week's matchup."
     )
-    profession_team: Optional[str] = Field(
+    professional_team: Optional[str] = Field(
         description="Current professional team for this player. "
+    )
+    professional_team_odds_set: Optional[List[Odds]] = Field(
+        description="List of current betting odds related to the player's professional team for this week's game."
+    )
+    player_odds_set: Optional[List[Odds]] = Field(
+        description="List of current betting odds specific to this player's individual performance for the current week."
     )
 
 
