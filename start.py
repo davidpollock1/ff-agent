@@ -16,7 +16,7 @@ _espnS2 = os.getenv("ESPN_S2")
 _swid = os.getenv("SWID")
 _teamId = 1
 _week = 12
-_year = 2024
+_year = 2024  # datetime.now().year
 
 
 def build_inputs() -> Tuple[LeagueDep, MatchupDep]:

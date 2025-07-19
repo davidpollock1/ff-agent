@@ -1,12 +1,10 @@
 import os
-from dotenv import load_dotenv
 from pydantic_ai import Agent, RunContext
 from output_model import LineupRecommendationOutput
 from models import LeagueDep, MatchupDep
 from pydantic.dataclasses import dataclass
 from pydantic import ConfigDict
 
-load_dotenv()
 BASE_URL = os.getenv("BASE_URL") or ""
 API_KEY = os.getenv("OPENAI_API_KEY") or ""
 MODEL_NAME = os.getenv("MODEL_NAME") or ""

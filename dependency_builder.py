@@ -86,8 +86,8 @@ class DependencyBuilder:
 
     def with_betting_odds_data(self):
         events_response = self.odds_api_client.get_events(
-            datetime(2025, 8, 1),
-            datetime(2025, 9, 10),  # self.__next_tuesday_1201am()
+            datetime(2025, 8, 1),  # datetime.now()
+            datetime(2025, 9, 10),  # self.__nfl_week_end()
         )
 
         if self._matchup_dep.my_team is None or events_response is None:
@@ -160,7 +160,7 @@ class DependencyBuilder:
         return odds_list
 
     @staticmethod
-    def __next_tuesday_1201am():
+    def __nfl_week_end():
         now = datetime.now()
         days_ahead = (1 - now.weekday() + 7) % 7  # 1 is Tuesday (Monday=0)
         if days_ahead == 0:
