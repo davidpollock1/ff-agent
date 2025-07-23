@@ -106,11 +106,11 @@ class MatchupDep:
     matchup_period: Optional[int] = Field(
         default=None, description="Current matchup period identifier."
     )
-    my_team: Optional[List[WeeklyPlayerProfileDep]] = Field(
+    team: Optional[List[WeeklyPlayerProfileDep]] = Field(
         default=None,
         description="Complete roster of players on the user's fantasy team.",
     )
-    my_team_projected_points: Optional[float] = Field(
+    team_projected_points: Optional[float] = Field(
         default=None,
         description="Total projected fantasy points for the user's current lineup.",
     )

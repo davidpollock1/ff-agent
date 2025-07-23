@@ -52,31 +52,23 @@ def mock_odds_api_client():
 
 @patch("dependency_builder.SportsOddsApiClient")
 def test_dependency_builder_basic(
-    mock_odds_client_class, mock_league, mock_box_score, mock_odds_api_client
+    mock_odds_client_class, mock_league, mock_odds_api_client
 ):
     mock_odds_client_class.return_value = mock_odds_api_client
-    builder = DependencyBuilder(
-        espn_league=mock_league, espn_box_score=mock_box_score, team_id=1
-    )
-    builder.with_league_dependency().with_matchup_dependency(
-        week=1
-    ).with_betting_odds_data()
+    builder = DependencyBuilder(espn_league=mock_league, team_id=1)
+    builder.with_league_dependency().with_matchup_dependency()
     assert isinstance(builder._league_dep, LeagueDep)
     assert isinstance(builder._matchup_dep, MatchupDep)
 
 
 @patch("dependency_builder.SportsOddsApiClient")
 def test_dependency_builder_missing_odds(
-    mock_odds_client_class, mock_league, mock_box_score, mock_odds_api_client
+    mock_odds_client_class, mock_league, mock_odds_api_client
 ):
     mock_odds_api_client.get_events.return_value = None
     mock_odds_client_class.return_value = mock_odds_api_client
-    builder = DependencyBuilder(
-        espn_league=mock_league, espn_box_score=mock_box_score, team_id=1
-    )
-    builder.with_league_dependency().with_matchup_dependency(
-        week=1
-    ).with_betting_odds_data()
-    assert builder._matchup_dep.my_team is None or isinstance(
+    builder = DependencyBuilder(espn_league=mock_league, team_id=1)
+    builder.with_league_dependency().with_matchup_dependency()
+    assert builder._matchup_dep.team is None or isinstance(
         builder._matchup_dep, MatchupDep
     )

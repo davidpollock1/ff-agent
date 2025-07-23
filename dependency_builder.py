@@ -80,8 +80,8 @@ class DependencyBuilder:
         self._matchup_dep = MatchupDep(
             matchup_period=self.espn_league.current_week,
             is_playoff_match=box_score.is_playoff,
-            my_team=team_weekly_player_list,
-            my_team_projected_points=team_projected,
+            team=team_weekly_player_list,
+            team_projected_points=team_projected,
             opponent_team_projected_points=opponent_projected,
         )
 

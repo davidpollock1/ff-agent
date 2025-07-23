@@ -39,7 +39,7 @@ def main() -> None:
 
     print(league_dep, matchup_dep)
 
-    # loadDB(league_dep, matchup_dep)
+    loadDB(league_dep, matchup_dep)
 
     # result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
     # print(result)

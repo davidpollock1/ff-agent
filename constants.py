@@ -31,4 +31,5 @@ team_map = {
     "TB": "Tampa Bay Buccaneers",
     "TEN": "Tennessee Titans",
     "WSH": "Washington Commanders",
+    "": "",
 }
