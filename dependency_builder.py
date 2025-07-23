@@ -1,9 +1,10 @@
-from typing import List, cast
+from typing import Dict, List, Tuple, cast
 from espn_api.football import League
-from espn_api.football.box_score import BoxScore, BoxPlayer
+from espn_api.football.box_score import BoxPlayer
 from espn_api.football.settings import Settings
 from clients.sports_odds_api_client import SportsOddsApiClient
 from datetime import datetime, timedelta
+from constants import team_map
 from agent.models import (
     LeagueDep,
     MatchupDep,
@@ -43,9 +44,8 @@ class DependencyBuilder:
         return self
 
     def with_matchup_dependency(self):
-        # box_scores = self.espn_league.box_scores(self.espn_league.current_week)
-        box_scores = self.espn_league.box_scores(12)
-
+        current_week = self.espn_league.current_week
+        box_scores = self.espn_league.box_scores(current_week)
         team = self.espn_league.teams[self.team_id]
 
         box_score = next(
@@ -72,10 +72,21 @@ class DependencyBuilder:
             player.playerId: player.proTeam for player in all_players_info
         }
 
-        team_weekly_player_list = [
-            self.__convert_box_player(player, player_info_lookup.get(player.playerId))
-            for player in team
-        ]
+        from_time, to_time = self.__get_nfl_week_range(current_week)
+        events_response = self.odds_api_client.get_events(from_time, to_time)
+
+        event_lookup_by_team: Dict[str, str] = {}
+        if events_response is not None and events_response.events:
+            for event in events_response.events:
+                event_lookup_by_team[event.home_team] = event.id
+                event_lookup_by_team[event.away_team] = event.id
+
+        team_weekly_player_list = []
+        for player in team:
+            team_abbr = player_info_lookup.get(player.playerId, "Unknown Team")
+            event_id = event_lookup_by_team.get(team_map[team_abbr], "Unknown Event")
+            wp = self.__convert_box_player(player, team_abbr, event_id)
+            team_weekly_player_list.append(wp)
 
         self._matchup_dep = MatchupDep(
             matchup_period=self.espn_league.current_week,
@@ -102,7 +113,9 @@ class DependencyBuilder:
         return position_slots
 
     @staticmethod
-    def __convert_box_player(box_player: BoxPlayer, pro_team: str | None):
+    def __convert_box_player(
+        box_player: BoxPlayer, pro_team: str | None, event_id: str
+    ) -> WeeklyPlayerProfileDep:
         return WeeklyPlayerProfileDep(
             name=box_player.name,
             active_status=box_player.active_status,
@@ -116,6 +129,7 @@ class DependencyBuilder:
             position_rank=box_player.posRank,
             professional_opponent="",
             professional_team=pro_team,
+            event_id=event_id,
         )
 
     @staticmethod
@@ -123,10 +137,11 @@ class DependencyBuilder:
         return [ScoringRules(**scoring) for scoring in scoring_format]
 
     @staticmethod
-    def __nfl_week_end():
-        now = datetime.now()
-        days_ahead = (1 - now.weekday() + 7) % 7  # 1 is Tuesday (Monday=0)
-        if days_ahead == 0:
-            days_ahead = 7
-        next_tuesday = now + timedelta(days=days_ahead)
-        return next_tuesday.replace(hour=0, minute=1, second=0, microsecond=0)
+    def __get_nfl_week_range(current_week: int) -> Tuple[datetime, datetime]:
+        season_start = datetime(2025, 9, 4)
+        if current_week < 1:
+            raise ValueError("current_week must be 1 or greater")
+
+        week_start = season_start + timedelta(weeks=(1 - 1))
+        week_end = week_start + timedelta(days=6)
+        return week_start, week_end

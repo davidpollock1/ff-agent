@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class NFLEventDTO(BaseModel):
@@ -17,8 +17,9 @@ class NFLEventResponseDTO(BaseModel):
 
 class OutcomeDTO(BaseModel):
     name: str
+    description: str = ""
     price: int
-    point: float
+    point: Optional[float] = None
 
 
 class MarketDTO(BaseModel):

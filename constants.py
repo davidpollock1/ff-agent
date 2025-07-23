@@ -33,3 +33,48 @@ team_map = {
     "WSH": "Washington Commanders",
     "": "",
 }
+
+
+position_markets_map = {
+    "QB": [
+        "player_pass_completions",
+        "player_pass_interceptions",
+        "player_pass_tds",
+        "player_pass_yds",
+        "player_rush_tds",
+        "player_rush_yds",
+        "player_anytime_td",
+    ],
+    "RB": [
+        "player_rush_tds",
+        "player_rush_yds",
+        "player_receptions",
+        "player_reception_tds",
+        "player_reception_yds",
+        "player_anytime_td",
+    ],
+    "WR": [
+        "player_receptions",
+        "player_reception_tds",
+        "player_reception_yds",
+        "player_rush_tds",
+        "player_rush_yds",
+        "player_anytime_td",
+    ],
+    "TE": [
+        "player_receptions",
+        "player_reception_tds",
+        "player_reception_yds",
+        "player_anytime_td",
+    ],
+    "K": [
+        "player_field_goals",
+        "player_kicking_points",
+        "player_pats",
+    ],
+    "D/ST": [
+        "player_sacks",
+        "player_defensive_interceptions",
+        "player_tds_over",
+    ],
+}

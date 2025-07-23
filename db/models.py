@@ -6,51 +6,37 @@ from clients.DTOs.odds_api_dtos import EventOddsResponseDTO
 
 class Outcome(BaseModel):
     name: str
+    description: str
     price: int
     point: Optional[float] = None
 
 
 class Market(BaseModel):
-    key: str
-    last_update: str
-    outcomes: List[Outcome]
-
-
-class Event(BaseModel):
-    id: str
-    sport_key: str
-    sport_title: str
-    commence_time: str
-    home_team: str
-    away_team: str
-    markets: List[Market] = []
+    event_id: Optional[str] = None
+    player_id: Optional[str] = None
+    key: Optional[str] = None
+    last_update: Optional[str] = None
+    outcomes: List[Outcome] = []
 
     @classmethod
-    def from_event_odds_response_dto(cls, dto: EventOddsResponseDTO) -> Event:
-        markets = (
-            [
-                Market(
-                    key=market.key,
-                    last_update=market.last_update,
-                    outcomes=[
-                        Outcome(
-                            name=outcome.name, price=outcome.price, point=outcome.point
-                        )
-                        for outcome in market.outcomes
-                    ],
+    def from_event_odds_response_dto(cls, dto: EventOddsResponseDTO) -> List[Market]:
+        markets = []
+        for bookmaker in dto.bookmakers:
+            for market_dto in bookmaker.markets:
+                outcomes = [
+                    Outcome(
+                        name=outcome.name,
+                        description=outcome.description,
+                        price=outcome.price,
+                        point=outcome.point,
+                    )
+                    for outcome in market_dto.outcomes
+                ]
+                market = cls(
+                    event_id=dto.id,
+                    key=market_dto.key,
+                    last_update=market_dto.last_update,
+                    outcomes=outcomes,
                 )
-                for market in dto.bookmakers[0].markets
-            ]
-            if dto.bookmakers
-            else []
-        )
-
-        return cls(
-            id=dto.id,
-            sport_key=dto.sport_key,
-            sport_title=dto.sport_title,
-            commence_time=dto.commence_time,
-            home_team=dto.home_team,
-            away_team=dto.away_team,
-            markets=markets,
-        )
+                markets.append(market)
+        return markets

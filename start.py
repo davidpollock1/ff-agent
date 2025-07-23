@@ -1,12 +1,15 @@
 import asyncio
-from typing import Tuple
-from db.database import get_latest_dependencies
+from db.database import (
+    get_latest_dependencies,
+    save_league_dep,
+    save_matchup_dep,
+    save_markets,
+)
 from dependency_builder import DependencyBuilder
-from agent.models import LeagueDep, MatchupDep
+from markets_builder import MarketsBuilder
 from espn_api.football import League
 from dotenv import load_dotenv
 from agent.agent import run_agent
-from load_odds import loadDB, save_dependencies
 import os
 
 load_dotenv()
@@ -17,36 +20,40 @@ _leagueId = os.getenv("LEAGUE_ID") or 0
 _espnS2 = os.getenv("ESPN_S2")
 _swid = os.getenv("SWID")
 _teamId = 1
-_week = 12
 _year = 2024  # datetime.now().year
 
+_LEAGUE_DEP = None
+_MATCHUP_DEP = None
+_MARKETS = None
 
-def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
-    league_dep, matchup_dep = get_latest_dependencies()
 
-    if league_dep is not None and matchup_dep is not None:
-        return league_dep, matchup_dep
+def build_inputs() -> None:
+    _LEAGUE_DEP, _MATCHUP_DEP = get_latest_dependencies()
 
-    league: League = League(
-        league_id=int(_leagueId), year=_year, espn_s2=_espnS2, swid=_swid
-    )
+    if _LEAGUE_DEP is None or _MATCHUP_DEP is None:
+        league: League = League(
+            league_id=int(_leagueId), year=_year, espn_s2=_espnS2, swid=_swid
+        )
+        dep_builder = DependencyBuilder(espn_league=league, team_id=_teamId)
+        dep_builder.with_league_dependency().with_matchup_dependency()
 
-    # _week = league.current_week
+        if _MARKETS is None:
+            markets_builder = MarketsBuilder(
+                dep_builder._league_dep, dep_builder._matchup_dep, league.player_map
+            )
+            markets_builder.with_player_props_market()
+            markets = markets_builder._markets
+            save_markets(markets)
 
-    builder = DependencyBuilder(espn_league=league, team_id=_teamId)
-
-    builder.with_league_dependency().with_matchup_dependency()
-
-    loadDB(builder._league_dep, builder._matchup_dep)
-    save_dependencies(builder._league_dep, builder._matchup_dep)
-    return builder._league_dep, builder._matchup_dep
+        save_league_dep(dep_builder._league_dep)
+        save_matchup_dep(dep_builder._matchup_dep)
 
 
 def main() -> None:
-    league_dep, matchup_dep = build_inputs()
+    build_inputs()
 
-    print(league_dep, matchup_dep)
-    # result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
+    # print(_LEAGUE_DEP, _MATCHUP_DEP)
+    # result = asyncio.run(run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT))
     # print(result)
 
 

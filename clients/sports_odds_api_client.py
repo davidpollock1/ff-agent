@@ -1,4 +1,5 @@
 import os
+from typing import Set
 import httpx
 from urllib.parse import quote
 from datetime import datetime
@@ -11,6 +12,7 @@ _ODDS_API_KEY = os.getenv("ODDS_API_KEY")
 class SportsOddsApiClient:
     def __init__(self) -> None:
         self.base_url = _ODDS_BASE_URL
+        self.sport_key = "americanfootball_nfl"
 
     def get_events(
         self, commence_time_from: datetime, commence_time_to: datetime
@@ -18,7 +20,7 @@ class SportsOddsApiClient:
         iso_commence_time_from = quote(commence_time_from.isoformat() + "Z")
         iso_commence_time_to = quote(commence_time_to.isoformat() + "Z")
 
-        request_url = f"{self.base_url}/v4/sports/americanfootball_nfl/events?apiKey={_ODDS_API_KEY}&dateFormat=iso&commenceTimeFrom={iso_commence_time_from}&commenceTimeTo={iso_commence_time_to}"
+        request_url = f"{self.base_url}/v4/sports/{self.sport_key}/events?apiKey={_ODDS_API_KEY}&dateFormat=iso&commenceTimeFrom={iso_commence_time_from}&commenceTimeTo={iso_commence_time_to}"
         try:
             response = httpx.get(request_url)
             if response.status_code == 200:
@@ -30,9 +32,25 @@ class SportsOddsApiClient:
 
         return NFLEventResponseDTO(events=[])
 
-    def get_team_totals_odds_for_event(self, event_id) -> EventOddsResponseDTO:
+    def get_team_totals_odds_for_event(self, event_id: str) -> EventOddsResponseDTO:
         bookmaker = "draftkings"
-        request_url = f"{self.base_url}/v4/sports/americanfootball_nfl/events/{event_id}/odds?apiKey={_ODDS_API_KEY}&bookmakers={bookmaker}&markets=totals&dateFormat=iso&oddsFormat=american"
+        request_url = f"{self.base_url}/v4/sports/{self.sport_key}/events/{event_id}/odds?apiKey={_ODDS_API_KEY}&bookmakers={bookmaker}&markets=totals&dateFormat=iso&oddsFormat=american"
+        try:
+            response = httpx.get(request_url)
+            if response.status_code == 200:
+                json_data = response.json()
+                response = EventOddsResponseDTO(**json_data)
+                return response
+        except Exception as e:
+            print(f"Error fetching totals odds {e}")
+        return EventOddsResponseDTO()
+
+    def get_player_props_odds_for_event(
+        self, event_id: str, market_ids: Set[str]
+    ) -> EventOddsResponseDTO:
+        bookmaker = "draftkings"
+        markets_param = ",".join(market_ids)
+        request_url = f"{self.base_url}/v4/sports/{self.sport_key}/events/{event_id}/odds?apiKey={_ODDS_API_KEY}&bookmakers={bookmaker}&markets={markets_param}&dateFormat=iso&oddsFormat=american"
         try:
             response = httpx.get(request_url)
             if response.status_code == 200:

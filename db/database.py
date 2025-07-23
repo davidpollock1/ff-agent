@@ -2,23 +2,24 @@ from tinydb import TinyDB, Query
 from tinydb.storages import JSONStorage
 from tinydb_serialization import SerializationMiddleware
 from tinydb_serialization.serializers import DateTimeSerializer
-from .models import Event
 from agent.models import LeagueDep, MatchupDep
 from datetime import datetime, timedelta
 from typing import Tuple
+from .models import Market
+from typing import List
 
 serialization = SerializationMiddleware(JSONStorage)
 serialization.register_serializer(DateTimeSerializer(), "TinyDate")
 
 db = TinyDB("sportsbook.json", storage=serialization)
-events_table = db.table("events")
+markets_table = db.table("markets")
 league_dependency_table = db.table("league_dependency")
 matchup_dependency_table = db.table("matchup_dependency")
 
 
-def save_event(event: Event):
-    EventQ = Query()
-    events_table.upsert(event.model_dump(), EventQ.event_id == event.id)
+# def save_event(event: Event):
+#     EventQ = Query()
+#     events_table.upsert(event.model_dump(), EventQ.event_id == event.id)
 
 
 def save_league_dep(league_dep: LeagueDep):
@@ -34,6 +35,16 @@ def save_matchup_dep(matchup_dep: MatchupDep):
             "matchup_dep": matchup_dep.model_dump(),
         }
     )
+
+
+def save_markets(markets: List[Market]):
+    for market in markets:
+        markets_table.insert(
+            {
+                "timestamp": datetime.now(),
+                "market": market.model_dump(),
+            }
+        )
 
 
 def get_latest_dependencies() -> Tuple[LeagueDep | None, MatchupDep | None]:
