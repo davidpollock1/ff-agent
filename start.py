@@ -22,6 +22,11 @@ _year = 2024  # datetime.now().year
 
 
 def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
+    league_dep, matchup_dep = get_latest_dependencies()
+
+    if league_dep is not None and matchup_dep is not None:
+        return league_dep, matchup_dep
+
     league: League = League(
         league_id=int(_leagueId), year=_year, espn_s2=_espnS2, swid=_swid
     )
@@ -32,17 +37,15 @@ def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
 
     builder.with_league_dependency().with_matchup_dependency()
 
+    loadDB(builder._league_dep, builder._matchup_dep)
+    save_dependencies(builder._league_dep, builder._matchup_dep)
     return builder._league_dep, builder._matchup_dep
 
 
 def main() -> None:
-    league_dep, matchup_dep = get_latest_dependencies()
-
-    if league_dep is None or matchup_dep is None:
-        league_dep, matchup_dep = build_inputs()
+    league_dep, matchup_dep = build_inputs()
 
     print(league_dep, matchup_dep)
-    save_dependencies(league_dep, matchup_dep)
     # result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
     # print(result)
 

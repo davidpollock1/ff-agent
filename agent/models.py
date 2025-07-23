@@ -91,6 +91,10 @@ class WeeklyPlayerProfileDep(BaseModel):
     professional_team: Optional[str] = Field(
         description="Current professional team for this player. "
     )
+    event_id: Optional[str] = Field(
+        default=None,
+        description="Unique identifier for event. Can be passed to tool calls to retrieve event info and odds.",
+    )
 
 
 class MatchupDep(BaseModel):
