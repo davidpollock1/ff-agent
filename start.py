@@ -5,6 +5,7 @@ from models import LeagueDep, MatchupDep
 from espn_api.football import League
 from dotenv import load_dotenv
 from agent import run_agent
+from load_odds import loadDB
 import os
 
 load_dotenv()
@@ -26,32 +27,22 @@ def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
 
     # _week = league.current_week
 
-    team = league.teams[0]
-    box_scores = league.box_scores(_week)
+    builder = DependencyBuilder(espn_league=league, team_id=_teamId)
 
-    box_score = next(
-        (bs for bs in box_scores if bs.home_team == team or bs.away_team == team)
-    )
-
-    if box_score is None:
-        quit()
-
-    builder = DependencyBuilder(
-        espn_league=league, espn_box_score=box_score, team_id=_teamId
-    )
-
-    builder.with_league_dependency().with_matchup_dependency(
-        _week
-    ).with_betting_odds_data()
+    builder.with_league_dependency().with_matchup_dependency()
 
     return builder._league_dep, builder._matchup_dep
 
 
 def main() -> None:
     league_dep, matchup_dep = build_inputs()
+
     print(league_dep, matchup_dep)
-    result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
-    print(result)
+
+    # loadDB(league_dep, matchup_dep)
+
+    # result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
+    # print(result)
 
 
 if __name__ == "__main__":

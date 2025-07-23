@@ -2,14 +2,11 @@ from typing import List, cast
 from espn_api.football import League
 from espn_api.football.box_score import BoxScore, BoxPlayer
 from espn_api.football.settings import Settings
-from clients.DTOs.odds_api_dtos import EventOddsResponse
 from clients.sports_odds_api_client import SportsOddsApiClient
 from datetime import datetime, timedelta
-from constants import team_map
 from models import (
     LeagueDep,
     MatchupDep,
-    Odds,
     WeeklyPlayerProfileDep,
     PositionSlot,
     ScoringRules,
@@ -17,11 +14,8 @@ from models import (
 
 
 class DependencyBuilder:
-    def __init__(
-        self, espn_league: League, espn_box_score: BoxScore, team_id: int
-    ) -> None:
+    def __init__(self, espn_league: League, team_id: int) -> None:
         self.espn_league = espn_league
-        self.box_score = espn_box_score
         self.team_id = team_id
         self.odds_api_client = SportsOddsApiClient()
         self._league_dep = LeagueDep()
@@ -48,17 +42,26 @@ class DependencyBuilder:
 
         return self
 
-    def with_matchup_dependency(self, week: int):
-        if self.box_score is None:
-            quit()
+    def with_matchup_dependency(self):
+        # box_scores = self.espn_league.box_scores(self.espn_league.current_week)
+        box_scores = self.espn_league.box_scores(12)
 
-        is_away = self.box_score.away_team == self.team_id
-        team = self.box_score.away_lineup if is_away else self.box_score.home_lineup
+        team = self.espn_league.teams[self.team_id]
+
+        box_score = next(
+            (bs for bs in box_scores if bs.home_team == team or bs.away_team == team)
+        )
+
+        if box_score is None:
+            return
+
+        is_away = box_score.away_team == self.team_id
+        team = box_score.away_lineup if is_away else box_score.home_lineup
         team_projected = (
-            self.box_score.away_projected if is_away else self.box_score.home_projected
+            box_score.away_projected if is_away else box_score.home_projected
         )
         opponent_projected = (
-            self.box_score.home_projected if is_away else self.box_score.away_projected
+            box_score.home_projected if is_away else box_score.away_projected
         )
 
         all_player_ids = [player.playerId for player in team]
@@ -75,37 +78,12 @@ class DependencyBuilder:
         ]
 
         self._matchup_dep = MatchupDep(
-            matchup_period=week,
-            is_playoff_match=self.box_score.is_playoff,
+            matchup_period=self.espn_league.current_week,
+            is_playoff_match=box_score.is_playoff,
             my_team=team_weekly_player_list,
             my_team_projected_points=team_projected,
             opponent_team_projected_points=opponent_projected,
         )
-
-        return self
-
-    def with_betting_odds_data(self):
-        events_response = self.odds_api_client.get_events(
-            datetime(2025, 8, 1),  # datetime.now()
-            datetime(2025, 9, 10),  # self.__nfl_week_end()
-        )
-
-        if self._matchup_dep.my_team is None or events_response is None:
-            return self
-
-        event_lookup_by_team = {}
-        if events_response is not None and events_response.events:
-            for event in events_response.events:
-                event_lookup_by_team[event.home_team] = event.id
-                event_lookup_by_team[event.away_team] = event.id
-
-        for wpp in self._matchup_dep.my_team:
-            pro_team = team_map[wpp.professional_team or ""]
-            event_id = event_lookup_by_team.get(pro_team)
-            odds = self.__convert_odds(
-                self.odds_api_client.get_team_totals_odds_for_event(event_id)
-            )
-            wpp.professional_team_odds_set = odds
 
         return self
 
@@ -143,21 +121,6 @@ class DependencyBuilder:
     @staticmethod
     def __convert_scoring_format(scoring_format: List[dict]) -> List[ScoringRules]:
         return [ScoringRules(**scoring) for scoring in scoring_format]
-
-    @staticmethod
-    def __convert_odds(event_odds_response: EventOddsResponse) -> List[Odds]:
-        odds_list = []
-        if (
-            event_odds_response.bookmakers
-            and len(event_odds_response.bookmakers) > 0
-            and event_odds_response.bookmakers[0].markets
-            and len(event_odds_response.bookmakers[0].markets) > 0
-        ):
-            for outcome in event_odds_response.bookmakers[0].markets[0].outcomes:
-                odds = Odds(type=outcome.name, price=outcome.price, point=outcome.point)
-                odds_list.append(odds)
-
-        return odds_list
 
     @staticmethod
     def __nfl_week_end():

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List
 
 
-class NFLEvent(BaseModel):
+class NFLEventDTO(BaseModel):
     id: str
     sport_key: str
     sport_title: str
@@ -11,33 +11,33 @@ class NFLEvent(BaseModel):
     away_team: str
 
 
-class NFLEventResponse(BaseModel):
-    events: List[NFLEvent]
+class NFLEventResponseDTO(BaseModel):
+    events: List[NFLEventDTO]
 
 
-class Outcome(BaseModel):
+class OutcomeDTO(BaseModel):
     name: str
     price: int
     point: float
 
 
-class Market(BaseModel):
+class MarketDTO(BaseModel):
     key: str
     last_update: str
-    outcomes: List[Outcome]
+    outcomes: List[OutcomeDTO]
 
 
-class Bookmaker(BaseModel):
+class BookmakerDTO(BaseModel):
     key: str
     title: str
-    markets: List[Market]
+    markets: List[MarketDTO]
 
 
-class EventOddsResponse(BaseModel):
+class EventOddsResponseDTO(BaseModel):
     id: str = ""
     sport_key: str = ""
     sport_title: str = ""
     commence_time: str = ""
     home_team: str = ""
     away_team: str = ""
-    bookmakers: List[Bookmaker] = []
+    bookmakers: List[BookmakerDTO] = []
