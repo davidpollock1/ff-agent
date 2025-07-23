@@ -1,36 +1,56 @@
-from sqlmodel import SQLModel, Session, create_engine, select
-from contextlib import contextmanager
-from typing import List, TypeVar
-from .models import NFLEvent
+from tinydb import TinyDB, Query
+from tinydb.storages import JSONStorage
+from tinydb_serialization import SerializationMiddleware
+from tinydb_serialization.serializers import DateTimeSerializer
+from .models import Event
+from agent.models import LeagueDep, MatchupDep
+from datetime import datetime, timedelta
+from typing import Tuple
+
+serialization = SerializationMiddleware(JSONStorage)
+serialization.register_serializer(DateTimeSerializer(), "TinyDate")
+
+db = TinyDB("sportsbook.json", storage=serialization)
+events_table = db.table("events")
+league_dependency_table = db.table("league_dependency")
+matchup_dependency_table = db.table("matchup_dependency")
 
 
-DATABASE_URL = "sqlite:///./ffagent.db"
-engine = create_engine(DATABASE_URL, echo=True)
+def save_event(event: Event):
+    EventQ = Query()
+    events_table.upsert(event.model_dump(), EventQ.event_id == event.id)
 
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+def save_league_dep(league_dep: LeagueDep):
+    league_dependency_table.insert(
+        {"timestamp": datetime.now(), "league_dep": league_dep.model_dump()}
+    )
 
 
-@contextmanager
-def get_session():
-    with Session(engine) as session:
-        yield session
+def save_matchup_dep(matchup_dep: MatchupDep):
+    matchup_dependency_table.insert(
+        {
+            "timestamp": datetime.now(),
+            "matchup_dep": matchup_dep.model_dump(),
+        }
+    )
 
 
-def upsert_object(nfl_event: NFLEvent, id: str) -> NFLEvent:
-    with get_session() as session:
-        statement = select(NFLEvent).where(NFLEvent.id == id)  # type: ignore
-        result = session.exec(statement).first()
+def get_latest_dependencies() -> Tuple[LeagueDep | None, MatchupDep | None]:
+    query = Query()
+    league_dep = db.table("league_dependency").search(
+        query.date > datetime.now() - timedelta(hours=2)
+    )
+    matchup_dep = db.table("matchup_dependency").search(
+        query.date > datetime.now() - timedelta(hours=2)
+    )
 
-        if result is None:
-            result = nfl_event
+    latest_league_dep = None
+    latest_matchup_dep = None
 
-        for key, value in nfl_event.dict(exclude_unset=True).items():
-            setattr(result, key, value)
+    if league_dep:
+        latest_league_dep = LeagueDep.model_validate(league_dep[-1]["league_dep"])
+    if matchup_dep:
+        latest_matchup_dep = MatchupDep.model_validate(matchup_dep[-1]["matchup_dep"])
 
-        session.add(result)
-        session.commit()
-        session.refresh(result)
-
-        return result
+    return latest_league_dep, latest_matchup_dep

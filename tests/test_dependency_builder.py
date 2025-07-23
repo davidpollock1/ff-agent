@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from dependency_builder import DependencyBuilder
-from models import LeagueDep, MatchupDep
+from agent.models import LeagueDep, MatchupDep
 
 
 @pytest.fixture
@@ -24,16 +24,16 @@ def mock_league():
     league.settings.reg_season_count = 13
     league.settings.playoff_matchup_period_length = 2
     league.settings.playoff_seed_tie_rule = "points"
-    league.teams = [MagicMock()]
+    league.teams = [MagicMock() for _ in range(10)]
     league.player_info.return_value = []
     return league
 
 
 @pytest.fixture
-def mock_box_score():
+def mock_box_score(mock_league):
     box_score = MagicMock()
-    box_score.away_team = 1
-    box_score.home_team = 2
+    box_score.away_team = mock_league.teams[0]
+    box_score.home_team = mock_league.teams[1]
     box_score.away_lineup = []
     box_score.home_lineup = []
     box_score.away_projected = 100.0

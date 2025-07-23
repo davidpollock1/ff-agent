@@ -3,3 +3,4 @@ system_prompt.txt
 __pycache__/
 .DS_Store
 ffagent.db
+sportsbook.json

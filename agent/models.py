@@ -1,11 +1,9 @@
 from datetime import datetime
-from pydantic.dataclasses import dataclass
-from pydantic import Field
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
-@dataclass
-class PositionSlot:
+class PositionSlot(BaseModel):
     """A slot on a fantasy football roster."""
 
     name: str = Field(..., description="Abbreviated name of the roster position slot.")
@@ -17,8 +15,7 @@ class PositionSlot:
     )
 
 
-@dataclass
-class ScoringRules:
+class ScoringRules(BaseModel):
     """The scoring rules for the league."""
 
     abbr: str = Field(..., description="Abbreviated identifier for the scoring rule.")
@@ -31,8 +28,7 @@ class ScoringRules:
     )
 
 
-@dataclass
-class LeagueDep:
+class LeagueDep(BaseModel):
     """League configuration and settings."""
 
     playoff_matchup_period_length: Optional[int] = Field(
@@ -62,8 +58,7 @@ class LeagueDep:
     )
 
 
-@dataclass
-class WeeklyPlayerProfileDep:
+class WeeklyPlayerProfileDep(BaseModel):
     """Represents a single player's profile and projections for the current fantasy week."""
 
     name: str = Field(..., description="Player's full name.")
@@ -98,8 +93,7 @@ class WeeklyPlayerProfileDep:
     )
 
 
-@dataclass
-class MatchupDep:
+class MatchupDep(BaseModel):
     is_playoff_match: Optional[bool] = Field(
         default=None, description="Whether this is a playoff matchup."
     )

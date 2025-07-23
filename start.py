@@ -1,11 +1,12 @@
 import asyncio
 from typing import Tuple
+from db.database import get_latest_dependencies
 from dependency_builder import DependencyBuilder
-from models import LeagueDep, MatchupDep
+from agent.models import LeagueDep, MatchupDep
 from espn_api.football import League
 from dotenv import load_dotenv
-from agent import run_agent
-from load_odds import loadDB
+from agent.agent import run_agent
+from load_odds import loadDB, save_dependencies
 import os
 
 load_dotenv()
@@ -35,12 +36,13 @@ def build_inputs() -> Tuple[LeagueDep, MatchupDep]:
 
 
 def main() -> None:
-    league_dep, matchup_dep = build_inputs()
+    league_dep, matchup_dep = get_latest_dependencies()
+
+    if league_dep is None or matchup_dep is None:
+        league_dep, matchup_dep = build_inputs()
 
     print(league_dep, matchup_dep)
-
-    loadDB(league_dep, matchup_dep)
-
+    save_dependencies(league_dep, matchup_dep)
     # result = asyncio.run(run_agent(league_dep, matchup_dep, USER_PROMPT))
     # print(result)
 

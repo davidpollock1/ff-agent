@@ -1,11 +1,11 @@
 from datetime import datetime
 from clients.sports_odds_api_client import SportsOddsApiClient
-from db.database import upsert_object
-from db.models import NFLEvent
 from clients.sports_odds_api_client import NFLEventDTO  # Adjust import if needed
-from models import LeagueDep, MatchupDep
+from agent.models import LeagueDep, MatchupDep
 from constants import team_map
 from typing import Dict
+from db.database import save_event, save_league_dep, save_matchup_dep
+from db.models import Event
 
 
 def loadDB(league_dep: LeagueDep, matchup_dep: MatchupDep):
@@ -25,14 +25,26 @@ def loadDB(league_dep: LeagueDep, matchup_dep: MatchupDep):
 
     nfl_events = []
     for player in roster:
-        if player.active_status == "active":
-            pro_team = team_map[player.professional_team or ""]
-            event = event_lookup_by_team.get(pro_team)
-            if event is not None and event not in nfl_events:
-                e = NFLEvent.from_dto(event)
-                nfl_events.append(e)
+        if player.active_status != "active":
+            continue
+
+        pro_team = team_map[player.professional_team or ""]
+        event = event_lookup_by_team.get(pro_team)
+        if event is None:
+            continue
+
+        if event not in nfl_events:
+            events_odds_response = odds_client.get_team_totals_odds_for_event(
+                event_id=event.id
+            )
+            nfl_events.append(Event.from_event_odds_response_dto(events_odds_response))
 
     print(nfl_events)
 
     for event in nfl_events:
-        upsert_object(event, event.id)
+        save_event(event)
+
+
+def save_dependencies(league_dep: LeagueDep, matchup_dep: MatchupDep):
+    save_league_dep(league_dep)
+    save_matchup_dep(matchup_dep)

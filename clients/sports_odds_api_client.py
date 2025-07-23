@@ -42,15 +42,3 @@ class SportsOddsApiClient:
         except Exception as e:
             print(f"Error fetching totals odds {e}")
         return EventOddsResponseDTO()
-
-
-# if __name__ == "__main__":
-#     sports_odds_client = SportsOddsApiClient()
-
-#     from_time = datetime(2025, 9, 1)
-#     to_time = datetime(2025, 9, 16)
-
-#     # response = sports_odds_client.get_events(from_time, to_time)
-#     response = sports_odds_client.get_team_totals_odds_for_event(
-#         event_id="c6d7807cee33d5e81c671527b9c8b3f1"
-#     )

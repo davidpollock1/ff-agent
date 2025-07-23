@@ -4,7 +4,7 @@ from espn_api.football.box_score import BoxScore, BoxPlayer
 from espn_api.football.settings import Settings
 from clients.sports_odds_api_client import SportsOddsApiClient
 from datetime import datetime, timedelta
-from models import (
+from agent.models import (
     LeagueDep,
     MatchupDep,
     WeeklyPlayerProfileDep,
