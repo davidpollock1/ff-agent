@@ -1,11 +1,9 @@
 from datetime import datetime
-from pydantic.dataclasses import dataclass
-from pydantic import Field
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
-@dataclass
-class PositionSlot:
+class PositionSlot(BaseModel):
     """A slot on a fantasy football roster."""
 
     name: str = Field(..., description="Abbreviated name of the roster position slot.")
@@ -17,8 +15,7 @@ class PositionSlot:
     )
 
 
-@dataclass
-class ScoringRules:
+class ScoringRules(BaseModel):
     """The scoring rules for the league."""
 
     abbr: str = Field(..., description="Abbreviated identifier for the scoring rule.")
@@ -31,8 +28,7 @@ class ScoringRules:
     )
 
 
-@dataclass
-class LeagueDep:
+class LeagueDep(BaseModel):
     """League configuration and settings."""
 
     playoff_matchup_period_length: Optional[int] = Field(
@@ -62,19 +58,7 @@ class LeagueDep:
     )
 
 
-@dataclass
-class Odds:
-    type: str = Field(description="Type of betting odd represented. ")
-    price: int = Field(
-        description="The betting line (e.g., -110 or +150), representing the amount you must wager to win $100 (negative) or the amount you win on a $100 bet (positive)."
-    )
-    point: float = Field(
-        description="The number of points associated with this betting odd, representing the predicted margin or total for the wager (e.g., point spread or over/under value)."
-    )
-
-
-@dataclass
-class WeeklyPlayerProfileDep:
+class WeeklyPlayerProfileDep(BaseModel):
     """Represents a single player's profile and projections for the current fantasy week."""
 
     name: str = Field(..., description="Player's full name.")
@@ -107,29 +91,24 @@ class WeeklyPlayerProfileDep:
     professional_team: Optional[str] = Field(
         description="Current professional team for this player. "
     )
-    professional_team_odds_set: Optional[List[Odds]] = Field(
-        default_factory=list,
-        description="List of current betting odds related to the player's professional team for this week's game.",
-    )
-    player_odds_set: Optional[List[Odds]] = Field(
-        default_factory=list,
-        description="List of current betting odds specific to this player's individual performance for the current week.",
+    event_id: Optional[str] = Field(
+        default=None,
+        description="Unique identifier for event. Can be passed to tool calls to retrieve event info and odds.",
     )
 
 
-@dataclass
-class MatchupDep:
+class MatchupDep(BaseModel):
     is_playoff_match: Optional[bool] = Field(
         default=None, description="Whether this is a playoff matchup."
     )
     matchup_period: Optional[int] = Field(
         default=None, description="Current matchup period identifier."
     )
-    my_team: Optional[List[WeeklyPlayerProfileDep]] = Field(
+    team: Optional[List[WeeklyPlayerProfileDep]] = Field(
         default=None,
         description="Complete roster of players on the user's fantasy team.",
     )
-    my_team_projected_points: Optional[float] = Field(
+    team_projected_points: Optional[float] = Field(
         default=None,
         description="Total projected fantasy points for the user's current lineup.",
     )
