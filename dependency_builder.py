@@ -130,6 +130,7 @@ class DependencyBuilder:
             professional_opponent="",
             professional_team=pro_team,
             event_id=event_id,
+            player_id=box_player.playerId,
         )
 
     @staticmethod

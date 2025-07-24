@@ -49,11 +49,11 @@ def save_markets(markets: List[Market]):
 
 def get_latest_dependencies() -> Tuple[LeagueDep | None, MatchupDep | None]:
     query = Query()
-    league_dep = db.table("league_dependency").search(
-        query.date > datetime.now() - timedelta(hours=2)
+    league_dep = league_dependency_table.search(
+        query.timestamp > datetime.now() - timedelta(days=2)
     )
-    matchup_dep = db.table("matchup_dependency").search(
-        query.date > datetime.now() - timedelta(hours=2)
+    matchup_dep = matchup_dependency_table.search(
+        query.timestamp > datetime.now() - timedelta(days=2)
     )
 
     latest_league_dep = None
@@ -65,3 +65,18 @@ def get_latest_dependencies() -> Tuple[LeagueDep | None, MatchupDep | None]:
         latest_matchup_dep = MatchupDep.model_validate(matchup_dep[-1]["matchup_dep"])
 
     return latest_league_dep, latest_matchup_dep
+
+
+def get_latest_event_markets(event_ids: List[str]) -> List[Market]:
+    query = Query()
+    markets = []
+
+    for event_id in event_ids:
+        event_markets = markets_table.search(query.market["event_id"] == event_id)
+        for market_entry in event_markets:
+            market_data = market_entry["market"]
+
+            market = Market.model_validate(market_data)
+            markets.append(market)
+
+    return markets

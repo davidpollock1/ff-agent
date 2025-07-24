@@ -43,7 +43,6 @@ class MarketsBuilder:
         roster = self.matchup_dep.team or []
         event_id_to_markets: EventMarketsMap = defaultdict(set)
 
-        markets = []
         for player in roster:
             if player.active_status != "active":
                 continue
@@ -57,6 +56,7 @@ class MarketsBuilder:
             events_odds_response = self.odds_api_client.get_player_props_odds_for_event(
                 event_id, market_ids=market_ids
             )
+
             self._markets.extend(
                 Market.from_event_odds_response_dto(events_odds_response)
             )

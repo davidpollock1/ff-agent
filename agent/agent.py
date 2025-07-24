@@ -1,9 +1,13 @@
 import os
+from typing import List
 from pydantic_ai import Agent, RunContext
 from agent.output_model import LineupRecommendationOutput
-from agent.models import LeagueDep, MatchupDep
+from agent.models import GetMarketsInput, LeagueDep, MatchupDep
 from pydantic.dataclasses import dataclass
 from pydantic import ConfigDict
+
+from db.database import get_latest_event_markets
+from db.models import Market
 
 BASE_URL = os.getenv("BASE_URL") or ""
 API_KEY = os.getenv("OPENAI_API_KEY") or ""
@@ -25,9 +29,31 @@ class AgentDependencies:
     matchup_dep: MatchupDep
 
 
+def get_event_markets(getMarketsInput: GetMarketsInput) -> List[Market]:
+    """
+    Retrieves the latest markets for a given event.
+
+    Args:
+        getMarketsInput (GetMarketsInput): An input object containing the event ID for which to fetch markets.
+
+    Returns:
+        List[Market]: A list of Market objects representing the latest markets for the specified event.
+
+    Note:
+        This function currently supports fetching markets for a single event ID provided in the input.
+    """
+    event_ids = []
+    event_ids.append(getMarketsInput.event_id)
+
+    markets = get_latest_event_markets(event_ids)
+
+    return markets
+
+
 agent = Agent(
     model=MODEL_NAME,
     # model_settings="",
+    tools=[get_event_markets],
     output_type=LineupRecommendationOutput,
     deps_type=AgentDependencies,
     system_prompt=(system_prompt_text),
