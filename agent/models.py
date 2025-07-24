@@ -95,6 +95,10 @@ class WeeklyPlayerProfileDep(BaseModel):
         default=None,
         description="Unique identifier for event. Can be passed to tool calls to retrieve event info and odds.",
     )
+    player_id: Optional[str] = Field(
+        default=None,
+        description="Unique identifier for the player. Can be passed to tool calls to retrieve player info and odds.",
+    )
 
 
 class MatchupDep(BaseModel):

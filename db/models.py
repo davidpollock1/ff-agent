@@ -8,12 +8,12 @@ class Outcome(BaseModel):
     name: str
     description: str
     price: int
+    player_id: Optional[str] = None
     point: Optional[float] = None
 
 
 class Market(BaseModel):
     event_id: Optional[str] = None
-    player_id: Optional[str] = None
     key: Optional[str] = None
     last_update: Optional[str] = None
     outcomes: List[Outcome] = []
@@ -29,6 +29,7 @@ class Market(BaseModel):
                         description=outcome.description,
                         price=outcome.price,
                         point=outcome.point,
+                        player_id="",
                     )
                     for outcome in market_dto.outcomes
                 ]
