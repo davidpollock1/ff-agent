@@ -2,6 +2,8 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+from db.models import Market
+
 
 class PositionSlot(BaseModel):
     """A slot on a fantasy football roster."""
@@ -120,3 +122,11 @@ class MatchupDep(BaseModel):
         default=None,
         description="Total projected fantasy points for the opponent's current lineup.",
     )
+
+
+class GetMarketsInput(BaseModel):
+    event_id: str
+
+
+class GetMarketsOutput(BaseModel):
+    markets: List[Market]

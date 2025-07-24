@@ -72,16 +72,16 @@ def build_inputs() -> None:
 
 def main() -> None:
     build_inputs()
-    print(_LEAGUE_DEP)
-    print("*" * 32)
+    # print(_LEAGUE_DEP)
+    # print("*" * 32)
 
-    print(_MATCHUP_DEP)
-    print("*" * 32)
+    # print(_MATCHUP_DEP)
+    # print("*" * 32)
 
-    print(_MARKETS)
-    print("*" * 32)
-    # result = asyncio.run(run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT))
-    # print(result)
+    # print(_MARKETS)
+    # print("*" * 32)
+    result = asyncio.run(run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT))
+    print(result)
 
 
 if __name__ == "__main__":
