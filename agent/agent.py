@@ -10,6 +10,9 @@ from agent.models import (
 from pydantic.dataclasses import dataclass
 from pydantic import ConfigDict
 from db.database import get_odds_for_event, get_odds_for_event_player
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = os.getenv("BASE_URL") or ""
 API_KEY = os.getenv("OPENAI_API_KEY") or ""
@@ -73,10 +76,10 @@ async def get_event_markets(
     """
     event_ids = []
     event_ids.append(getBettingOddsInput.event_id)
+    logger.info(f"get_events_markets for event id: {getBettingOddsInput.event_id}")
 
-    print(f"get_events_markets for event id: {getBettingOddsInput.event_id}")
     op = GetBettingOddsOutput(odds=await get_odds_for_event(event_ids))
-    print(f"Odds: {op.odds}")
+    logger.info(f"Odds: {op.odds}")
     return op
 
 
@@ -93,7 +96,7 @@ async def get_player_event_odds(
     Note:
         If the player ID is not provided, an empty string is used as the default.
     """
-    print(
+    logger.info(
         f"get_player_event_odds for event_id: {getBettingOddsInput.event_id} and player_id: {getBettingOddsInput.player_id}"
     )
     if not getBettingOddsInput.player_id:
@@ -104,7 +107,7 @@ async def get_player_event_odds(
         )
     )
 
-    print(player_event_odds.odds)
+    logger.info(player_event_odds.odds)
     return player_event_odds
 
 

@@ -4,6 +4,9 @@ import httpx
 from urllib.parse import quote
 from datetime import datetime
 from .DTOs.odds_api_dtos import NFLEventDTO, NFLEventResponseDTO, EventOddsResponseDTO
+import logging
+
+logger = logging.getLogger(__name__)
 
 _ODDS_BASE_URL = os.getenv("ODDS_API_BASE_URL")
 _ODDS_API_KEY = os.getenv("ODDS_API_KEY")
@@ -28,7 +31,7 @@ class SportsOddsApiClient:
                 events = [NFLEventDTO(**event) for event in json_data]
                 return NFLEventResponseDTO(events=events)
         except Exception as e:
-            print(f"Error fetching events: {e} ")
+            logger.error(f"Error fetching events: {e} ")
 
         return NFLEventResponseDTO(events=[])
 
@@ -42,7 +45,7 @@ class SportsOddsApiClient:
                 response = EventOddsResponseDTO(**json_data)
                 return response
         except Exception as e:
-            print(f"Error fetching totals odds {e}")
+            logger.error(f"Error fetching totals odds {e}")
         return EventOddsResponseDTO()
 
     def get_player_props_odds_for_event(
@@ -58,5 +61,5 @@ class SportsOddsApiClient:
                 response = EventOddsResponseDTO(**json_data)
                 return response
         except Exception as e:
-            print(f"Error fetching totals odds {e}")
+            logger.error(f"Error fetching totals odds {e}")
         return EventOddsResponseDTO()

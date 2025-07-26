@@ -17,6 +17,10 @@ from dotenv import load_dotenv
 from typing import Optional
 from agent.agent import run_agent
 import os
+import logging
+import logger_config
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -39,6 +43,7 @@ async def build_inputs() -> None:
     global _MATCHUP_DEP
     global _MARKETS
     try:
+        logger.info("Building inputs.")
         _LEAGUE_DEP, _MATCHUP_DEP = await get_latest_dependencies()
 
         league: League = League(
@@ -69,7 +74,7 @@ async def build_inputs() -> None:
             save_markets(markets_builder._betting_odds)
             _MARKETS = await get_odds_for_event(ids)
     except Exception as e:
-        print(e)
+        logger.error(e)
 
 
 async def main() -> None:
@@ -77,8 +82,8 @@ async def main() -> None:
     # event_id = "f1bc532dff946d15cb85654b5c4b246e"
     # player_id = "4361579"
     # # print(await get_odds_for_event_player(event_id, player_id))
-    result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
-    print(result)
+    # result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
+    # print(result)5
 
 
 if __name__ == "__main__":
