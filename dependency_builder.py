@@ -55,7 +55,7 @@ class DependencyBuilder:
         if box_score is None:
             return
 
-        is_away = box_score.away_team == self.team_id
+        is_away = box_score.away_team == team
         team = box_score.away_lineup if is_away else box_score.home_lineup
         team_projected = (
             box_score.away_projected if is_away else box_score.home_projected
@@ -127,10 +127,10 @@ class DependencyBuilder:
             game_date=getattr(box_player, "game_date", None),
             projected_points=box_player.projected_points,
             position_rank=box_player.posRank,
-            professional_opponent="",
+            professional_opponent=box_player.pro_opponent,
             professional_team=pro_team,
             event_id=event_id,
-            player_id=box_player.playerId,
+            player_id=str(box_player.playerId),
         )
 
     @staticmethod

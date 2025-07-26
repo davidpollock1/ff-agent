@@ -1,8 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
-
-from db.models import Market
+from db.models import BettingOdds
 
 
 class PositionSlot(BaseModel):
@@ -99,7 +98,7 @@ class WeeklyPlayerProfileDep(BaseModel):
     )
     player_id: Optional[str] = Field(
         default=None,
-        description="Unique identifier for the player. Can be passed to tool calls to retrieve player info and odds.",
+        description="Unique identifier for the player.",
     )
 
 
@@ -124,9 +123,10 @@ class MatchupDep(BaseModel):
     )
 
 
-class GetMarketsInput(BaseModel):
+class GetBettingOddsInput(BaseModel):
     event_id: str
+    player_id: Optional[str] = None
 
 
-class GetMarketsOutput(BaseModel):
-    markets: List[Market]
+class GetBettingOddsOutput(BaseModel):
+    odds: List[BettingOdds]

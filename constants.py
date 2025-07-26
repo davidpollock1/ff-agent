@@ -75,6 +75,5 @@ position_markets_map = {
     "D/ST": [
         "player_sacks",
         "player_defensive_interceptions",
-        "player_tds_over",
     ],
 }

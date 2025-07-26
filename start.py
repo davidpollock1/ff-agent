@@ -3,12 +3,13 @@ from typing import List
 from agent.models import LeagueDep, MatchupDep
 from db.database import (
     get_latest_dependencies,
-    get_latest_event_markets,
+    get_odds_for_event,
+    get_odds_for_event_player,
     save_league_dep,
     save_matchup_dep,
     save_markets,
 )
-from db.models import Market
+from db.models import BettingOdds
 from dependency_builder import DependencyBuilder
 from markets_builder import MarketsBuilder
 from espn_api.football import League
@@ -19,26 +20,26 @@ import os
 
 load_dotenv()
 
-USER_PROMPT = "Evaluate my current fantasy football roster and produce the best possible starting lineup for this week. Recommend any changes and explain your reasoning."
+USER_PROMPT = "Build the optimal starting lineup for this week. Maximize projected points, follow roster rules, and summarize the key changes made compared to the current lineup."
 
 _leagueId = os.getenv("LEAGUE_ID") or 0
 _espnS2 = os.getenv("ESPN_S2")
 _swid = os.getenv("SWID")
 _teamId = 1
-_year = 2024  # datetime.now().year
+_year = 2025  # datetime.now().year
 
 
 _LEAGUE_DEP: Optional[LeagueDep]
 _MATCHUP_DEP: Optional[MatchupDep]
-_MARKETS: Optional[List[Market]]
+_MARKETS: Optional[List[BettingOdds]]
 
 
-def build_inputs() -> None:
+async def build_inputs() -> None:
     global _LEAGUE_DEP
     global _MATCHUP_DEP
     global _MARKETS
     try:
-        _LEAGUE_DEP, _MATCHUP_DEP = get_latest_dependencies()
+        _LEAGUE_DEP, _MATCHUP_DEP = await get_latest_dependencies()
 
         league: League = League(
             league_id=int(_leagueId), year=_year, espn_s2=_espnS2, swid=_swid
@@ -58,31 +59,27 @@ def build_inputs() -> None:
             for player in _MATCHUP_DEP.team:
                 ids.append(player.event_id)
 
-        _MARKETS = get_latest_event_markets(ids)
+        _MARKETS = await get_odds_for_event(ids)
 
-        if _MARKETS is None:
+        if len(_MARKETS) <= 0:
             markets_builder = MarketsBuilder(
                 _LEAGUE_DEP, _MATCHUP_DEP, league.player_map
             )
-            markets_builder.with_player_props_market()
-            save_markets(markets_builder._markets)
+            markets_builder.with_totals_market().with_player_props_market()
+            save_markets(markets_builder._betting_odds)
+            _MARKETS = await get_odds_for_event(ids)
     except Exception as e:
         print(e)
 
 
-def main() -> None:
-    build_inputs()
-    # print(_LEAGUE_DEP)
-    # print("*" * 32)
-
-    # print(_MATCHUP_DEP)
-    # print("*" * 32)
-
-    # print(_MARKETS)
-    # print("*" * 32)
-    result = asyncio.run(run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT))
+async def main() -> None:
+    await build_inputs()
+    # event_id = "f1bc532dff946d15cb85654b5c4b246e"
+    # player_id = "4361579"
+    # # print(await get_odds_for_event_player(event_id, player_id))
+    result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
     print(result)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
