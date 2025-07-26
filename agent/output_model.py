@@ -17,7 +17,10 @@ class LineupChangeSummary(BaseModel):
     promoted_players: List[str] = Field(
         ..., description="List of players being promoted to starting lineup"
     )
-    reasoning: str = Field(..., description="Short explanation of the changes made")
+    reasoning: str = Field(
+        ...,
+        description="Short explanation of the changes made and what data they were based on. ",
+    )
 
 
 class LineupRecommendationOutput(BaseModel):

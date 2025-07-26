@@ -5,14 +5,16 @@ from tinydb_serialization.serializers import DateTimeSerializer
 from agent.models import LeagueDep, MatchupDep
 from datetime import datetime, timedelta
 from typing import Tuple
-from .models import Market
+from .models import BettingOdds
 from typing import List
+import asyncio
 
 serialization = SerializationMiddleware(JSONStorage)
 serialization.register_serializer(DateTimeSerializer(), "TinyDate")
 
+db_lock = asyncio.Lock()
 db = TinyDB("sportsbook.json", storage=serialization)
-markets_table = db.table("markets")
+betting_odds_table = db.table("odds")
 league_dependency_table = db.table("league_dependency")
 matchup_dependency_table = db.table("matchup_dependency")
 
@@ -37,46 +39,58 @@ def save_matchup_dep(matchup_dep: MatchupDep):
     )
 
 
-def save_markets(markets: List[Market]):
-    for market in markets:
-        markets_table.insert(
-            {
-                "timestamp": datetime.now(),
-                "market": market.model_dump(),
-            }
+def save_markets(odds: List[BettingOdds]):
+    for odd in odds:
+        betting_odds_table.insert(odd.model_dump())
+
+
+async def get_latest_dependencies() -> Tuple[LeagueDep | None, MatchupDep | None]:
+    async with db_lock:
+        query = Query()
+        league_dep = league_dependency_table.search(
+            query.timestamp > datetime.now() - timedelta(days=2)
+        )
+        matchup_dep = matchup_dependency_table.search(
+            query.timestamp > datetime.now() - timedelta(days=2)
         )
 
+        latest_league_dep = None
+        latest_matchup_dep = None
 
-def get_latest_dependencies() -> Tuple[LeagueDep | None, MatchupDep | None]:
-    query = Query()
-    league_dep = league_dependency_table.search(
-        query.timestamp > datetime.now() - timedelta(days=2)
-    )
-    matchup_dep = matchup_dependency_table.search(
-        query.timestamp > datetime.now() - timedelta(days=2)
-    )
+        if league_dep:
+            latest_league_dep = LeagueDep.model_validate(league_dep[-1]["league_dep"])
+        if matchup_dep:
+            latest_matchup_dep = MatchupDep.model_validate(
+                matchup_dep[-1]["matchup_dep"]
+            )
 
-    latest_league_dep = None
-    latest_matchup_dep = None
-
-    if league_dep:
-        latest_league_dep = LeagueDep.model_validate(league_dep[-1]["league_dep"])
-    if matchup_dep:
-        latest_matchup_dep = MatchupDep.model_validate(matchup_dep[-1]["matchup_dep"])
-
-    return latest_league_dep, latest_matchup_dep
+        return latest_league_dep, latest_matchup_dep
 
 
-def get_latest_event_markets(event_ids: List[str]) -> List[Market]:
-    query = Query()
-    markets = []
+async def get_odds_for_event(event_ids: List[str]) -> List[BettingOdds]:
+    async with db_lock:
+        query = Query()
+        odds = []
 
-    for event_id in event_ids:
-        event_markets = markets_table.search(query.market["event_id"] == event_id)
-        for market_entry in event_markets:
-            market_data = market_entry["market"]
+        for event_id in event_ids:
+            event_odds = betting_odds_table.search(query.event_id == event_id)
+            for odd in event_odds:
+                market = BettingOdds.model_validate(odd)
+                odds.append(market)
 
-            market = Market.model_validate(market_data)
-            markets.append(market)
+        return odds
 
-    return markets
+
+async def get_odds_for_event_player(event_id: str, player_id: str) -> List[BettingOdds]:
+    async with db_lock:
+        query = Query()
+        odds = []
+
+        event_odds = betting_odds_table.search(
+            (query.event_id == event_id) & (query.player_id == player_id)
+        )
+        for odd in event_odds:
+            market = BettingOdds.model_validate(odd)
+            odds.append(market)
+
+        return odds
