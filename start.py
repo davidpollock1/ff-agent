@@ -1,6 +1,10 @@
 import asyncio
+import os
+import logging
+import logger_config
 from typing import List
-from agent.models import LeagueDep, MatchupDep
+from typing import Optional
+
 from db.database import (
     get_latest_dependencies,
     get_odds_for_event,
@@ -14,11 +18,8 @@ from dependency_builder import DependencyBuilder
 from markets_builder import MarketsBuilder
 from espn_api.football import League
 from dotenv import load_dotenv
-from typing import Optional
+from agent.models import LeagueDep, MatchupDep
 from agent.agent import run_agent
-import os
-import logging
-import logger_config
 
 logger = logging.getLogger(__name__)
 
