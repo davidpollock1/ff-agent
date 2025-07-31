@@ -46,6 +46,13 @@ agent = Agent(
 
 @agent.tool
 def get_my_roster(ctx: RunContext[AgentDependencies]) -> MatchupDep:
+    """
+    Retrieves the matchup data for the current matchup period from the given context.
+    Args:
+        ctx (RunContext[AgentDependencies]): The execution context containing dependencies.
+    Returns:
+        MatchupDep: The matchup data for the current matchup period.
+    """
     """Get the match up data for the current matchup period."""
     matchup = ctx.deps.matchup_dep
     return matchup
@@ -53,7 +60,13 @@ def get_my_roster(ctx: RunContext[AgentDependencies]) -> MatchupDep:
 
 @agent.tool
 def get_league_settings(ctx: RunContext[AgentDependencies]) -> LeagueDep:
-    """Get the league and league settings."""
+    """
+    Retrieves the league dependency from the provided context.
+    Args:
+        ctx (RunContext[AgentDependencies]): The execution context containing dependencies.
+    Returns:
+        LeagueDep: The league dependency object.
+    """
     league = ctx.deps.league_dep
     return league
 
