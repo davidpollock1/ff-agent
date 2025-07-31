@@ -19,11 +19,6 @@ league_dependency_table = db.table("league_dependency")
 matchup_dependency_table = db.table("matchup_dependency")
 
 
-# def save_event(event: Event):
-#     EventQ = Query()
-#     events_table.upsert(event.model_dump(), EventQ.event_id == event.id)
-
-
 def save_league_dep(league_dep: LeagueDep):
     league_dependency_table.insert(
         {"timestamp": datetime.now(), "league_dep": league_dep.model_dump()}

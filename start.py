@@ -1,14 +1,11 @@
 import asyncio
 import os
 import logging
-import logger_config
 from typing import List
 from typing import Optional
-
 from db.database import (
     get_latest_dependencies,
     get_odds_for_event,
-    get_odds_for_event_player,
     save_league_dep,
     save_matchup_dep,
     save_markets,
@@ -82,9 +79,9 @@ async def main() -> None:
     await build_inputs()
     # event_id = "f1bc532dff946d15cb85654b5c4b246e"
     # player_id = "4361579"
-    # # print(await get_odds_for_event_player(event_id, player_id))
-    # result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
-    # print(result)5
+    # print(await get_odds_for_event_player(event_id, player_id))
+    result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
+    print(result)
 
 
 if __name__ == "__main__":
