@@ -28,7 +28,7 @@ USER_PROMPT = "Build the optimal starting lineup for this week. Maximize project
 _leagueId = os.getenv("LEAGUE_ID") or 0
 _espnS2 = os.getenv("ESPN_S2")
 _swid = os.getenv("SWID")
-_teamId = 1
+_teamId = 0
 _year = datetime.now().year
 
 
