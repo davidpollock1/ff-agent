@@ -1,7 +1,7 @@
+from typing import Dict, List, Set, Self, Any
 from collections import defaultdict
 from clients.sports_odds_api_client import SportsOddsApiClient
 from agent.models import LeagueDep, MatchupDep
-from typing import Dict, List, Set
 from db.models import BettingOdds
 from constants import position_markets_map
 
@@ -13,7 +13,7 @@ class MarketsBuilder:
         self,
         league_dep: LeagueDep,
         matchup_dep: MatchupDep,
-        player_map: Dict,
+        player_map: Dict[Any, Any],
     ) -> None:
         self.odds_api_client = SportsOddsApiClient()
         self.player_map = player_map
@@ -21,7 +21,7 @@ class MarketsBuilder:
         self.matchup_dep = matchup_dep
         self._betting_odds: List[BettingOdds] = []
 
-    def with_totals_market(self):
+    def with_totals_market(self) -> Self:
         roster = self.matchup_dep.team or []
 
         for player in roster:
@@ -40,7 +40,7 @@ class MarketsBuilder:
 
         return self
 
-    def with_player_props_market(self):
+    def with_player_props_market(self) -> Self:
         roster = self.matchup_dep.team or []
         event_id_to_markets: EventMarketsMap = defaultdict(set)
 

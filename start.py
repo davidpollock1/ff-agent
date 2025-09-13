@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import os
 import logging
 from typing import List
@@ -28,7 +29,7 @@ _leagueId = os.getenv("LEAGUE_ID") or 0
 _espnS2 = os.getenv("ESPN_S2")
 _swid = os.getenv("SWID")
 _teamId = 1
-_year = 2025  # datetime.now().year
+_year = datetime.now().year
 
 
 _LEAGUE_DEP: Optional[LeagueDep]
@@ -60,7 +61,8 @@ async def build_inputs() -> None:
         ids = []
         if _MATCHUP_DEP.team:
             for player in _MATCHUP_DEP.team:
-                ids.append(player.event_id)
+                if player.event_id is not None:
+                    ids.append(player.event_id)
 
         _MARKETS = await get_odds_for_event(ids)
 
@@ -80,7 +82,8 @@ async def main() -> None:
     # event_id = "f1bc532dff946d15cb85654b5c4b246e"
     # player_id = "4361579"
     # print(await get_odds_for_event_player(event_id, player_id))
-    result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
+    if _LEAGUE_DEP is not None and _MATCHUP_DEP is not None:
+        result = await run_agent(_LEAGUE_DEP, _MATCHUP_DEP, USER_PROMPT)
     print(result)
 
 

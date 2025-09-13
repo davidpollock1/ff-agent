@@ -1,4 +1,5 @@
 import os
+from typing import Any
 from pydantic_ai import Agent, RunContext
 from agent.output_model import LineupRecommendationOutput
 from agent.models import (
@@ -124,7 +125,7 @@ async def get_player_event_odds(
     return player_event_odds
 
 
-async def run_agent(league_dep, matchup_dep, prompt):
+async def run_agent(league_dep: LeagueDep, matchup_dep: MatchupDep, prompt: str) -> Any:
     league = league_dep
     matchup = matchup_dep
 

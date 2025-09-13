@@ -19,13 +19,13 @@ league_dependency_table = db.table("league_dependency")
 matchup_dependency_table = db.table("matchup_dependency")
 
 
-def save_league_dep(league_dep: LeagueDep):
+def save_league_dep(league_dep: LeagueDep) -> None:
     league_dependency_table.insert(
         {"timestamp": datetime.now(), "league_dep": league_dep.model_dump()}
     )
 
 
-def save_matchup_dep(matchup_dep: MatchupDep):
+def save_matchup_dep(matchup_dep: MatchupDep) -> None:
     matchup_dependency_table.insert(
         {
             "timestamp": datetime.now(),
@@ -34,7 +34,7 @@ def save_matchup_dep(matchup_dep: MatchupDep):
     )
 
 
-def save_markets(odds: List[BettingOdds]):
+def save_markets(odds: List[BettingOdds]) -> None:
     for odd in odds:
         betting_odds_table.insert(odd.model_dump())
 

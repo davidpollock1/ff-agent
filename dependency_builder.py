@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, Tuple, cast, Self, Any
 from espn_api.football import League
 from espn_api.football.box_score import BoxPlayer
 from espn_api.football.settings import Settings
@@ -22,7 +22,7 @@ class DependencyBuilder:
         self._league_dep = LeagueDep()
         self._matchup_dep = MatchupDep()
 
-    def with_league_dependency(self):
+    def with_league_dependency(self) -> Self:
         settings = cast(Settings, self.espn_league.settings)
         position_slots: List[PositionSlot] = self.__convert_position_slots(
             settings.position_slot_counts
@@ -43,7 +43,7 @@ class DependencyBuilder:
 
         return self
 
-    def with_matchup_dependency(self):
+    def with_matchup_dependency(self) -> Self:
         current_week = self.espn_league.current_week
         box_scores = self.espn_league.box_scores(current_week)
         team = self.espn_league.teams[self.team_id]
@@ -53,7 +53,7 @@ class DependencyBuilder:
         )
 
         if box_score is None:
-            return
+            return self
 
         is_away = box_score.away_team == team
         team = box_score.away_lineup if is_away else box_score.home_lineup
@@ -99,7 +99,9 @@ class DependencyBuilder:
         return self
 
     @staticmethod
-    def __convert_position_slots(position_slot_counts: dict) -> List[PositionSlot]:
+    def __convert_position_slots(
+        position_slot_counts: Dict[Any, Any],
+    ) -> List[PositionSlot]:
         position_slots = []
         for p, val in position_slot_counts.items():
             if val == 0:
@@ -134,7 +136,9 @@ class DependencyBuilder:
         )
 
     @staticmethod
-    def __convert_scoring_format(scoring_format: List[dict]) -> List[ScoringRules]:
+    def __convert_scoring_format(
+        scoring_format: List[Dict[Any, Any]],
+    ) -> List[ScoringRules]:
         return [ScoringRules(**scoring) for scoring in scoring_format]
 
     @staticmethod
