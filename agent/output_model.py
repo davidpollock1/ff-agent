@@ -19,7 +19,7 @@ class LineupChangeSummary(BaseModel):
     )
     reasoning: str = Field(
         ...,
-        description="Short explanation of the changes made and what data they were based on. ",
+        description="Short explanation of the changes made and why. Ex: Projected points, a specific betting odd or player prop odds.",
     )
 
 

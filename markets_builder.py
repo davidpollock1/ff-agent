@@ -63,3 +63,5 @@ class MarketsBuilder:
                 )
             )
             break  # only calling odds api for first loop, conserving free calls.
+
+        return self
