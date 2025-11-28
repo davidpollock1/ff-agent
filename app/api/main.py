@@ -1,10 +1,7 @@
-from fastapi import APIRouter, FastAPI, Request, Depends
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Annotated
-from clients.sports_odds_api_client import SportsOddsApiClient
-
 
 app = FastAPI()
 
@@ -26,10 +23,8 @@ async def home(request: Request) -> HTMLResponse:
 
 
 @app.get("/intake/")
-async def intake(
-    deps: Annotated[dict, Depends(SportsOddsApiClient)],
-) -> HTMLResponse:
-    return templates.TemplateResponse("home.html", {"request": commons})
+async def intake() -> HTMLResponse:
+    return templates.TemplateResponse("home.html")
 
 
 app.include_router(router)
