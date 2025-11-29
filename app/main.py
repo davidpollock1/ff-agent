@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
 from app.db.session import get_session, engine
 from app.models.models import SQLModel
+from app.services.intake import IntakeService
 
 app = FastAPI()
 router = APIRouter()
@@ -29,8 +30,8 @@ async def home(request: Request) -> HTMLResponse:
 
 
 @app.get("/intake/")
-async def intake(sessions: Session = Depends(get_session)) -> HTMLResponse:
-    return templates.TemplateResponse("home.html")
+async def intake(sessions: Session = Depends(get_session)) -> str:
+    return "Intake endpoint"
 
 
 app.include_router(router)

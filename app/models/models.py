@@ -10,7 +10,7 @@ class Event(SQLModel, table=True):
 
 
 class League(SQLModel, table=True):
-    league_id: int = Field(primary_key=True)
+    id: int = Field(primary_key=True)
     name: str
     scoring_type: str
     year: int
@@ -20,14 +20,14 @@ class League(SQLModel, table=True):
 
 class Team(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    league_id: int = Field(foreign_key="league.league_id")
+    league_id: int = Field(foreign_key="league.id")
     name: str
     owner: str
 
 
 class LeaguePositionSlot(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    league_id: int = Field(foreign_key="league.league_id")
+    league_id: int = Field(foreign_key="league.id")
     name: str
     max_allowed: int
     is_starting_slot: bool
@@ -35,7 +35,7 @@ class LeaguePositionSlot(SQLModel, table=True):
 
 class TeamWeek(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    team_id: int = Field(foreign_key="team.team_id")
+    team_id: int = Field(foreign_key="team.id")
     week: int
 
 
