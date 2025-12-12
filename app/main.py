@@ -4,14 +4,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
 from app.db.session import get_session, engine
-from app.models.models import SQLModel
+from sqlmodel import SQLModel
 from app.services.intake import IntakeService
+from app.auth.routes import router as auth_router
 
 app = FastAPI()
 router = APIRouter()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
 
 
 @app.on_event("startup")
@@ -35,3 +36,4 @@ async def intake(sessions: Session = Depends(get_session)) -> str:
 
 
 app.include_router(router)
+app.include_router(auth_router)
