@@ -1,92 +1,48 @@
-from fastapi import APIRouter, Request, Form, status, Depends, Response
-from fastapi.responses import RedirectResponse, HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlmodel import Session, select
-from app.models.models import User
-from app.db.session import get_session
-import bcrypt
-import secrets
+from datetime import timedelta
+from typing import Annotated
 
+from app.deps import SessionDep
+from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from .models import Token, User
+from .auth import (
+    authenticate_user,
+    create_access_token,
+    get_current_active_user,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+)
 
-templates = Jinja2Templates(directory="app/templates")
 router = APIRouter()
 
-SESSION_COOKIE = "session"
-SESSION_SECRET = secrets.token_urlsafe(32)
 
-
-def get_password_hash(password: str) -> str:
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+@router.post("/token")
+async def login_for_access_token(
+    session: SessionDep,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> Token:
+    user = authenticate_user(session, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
     )
+    return Token(access_token=access_token, token_type="bearer")
 
 
-def create_session_cookie(user_id: int) -> str:
-    # need to update for prod.
-    return str(user_id)
+@router.get("/users/me")
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> User:
+    return current_user
 
 
-def get_user_from_session(request: Request, session: Session) -> User | None:
-    user_id = request.cookies.get(SESSION_COOKIE)
-    if not user_id:
-        return None
-    return session.get(User, int(user_id))
-
-
-@router.get("/signup", response_class=HTMLResponse)
-def signup_form(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse("signup.html", {"request": request})
-
-
-@router.post("/signup")
-def signup(
-    request: Request,
-    response: Response,
-    email: str = Form(...),
-    password: str = Form(...),
-    session: Session = Depends(get_session),
-) -> Response:
-    existing = session.exec(select(User).where(User.email == email)).first()
-    if existing:
-        return HTMLResponse("Email already registered", status_code=400)
-    user = User(email=email, hashed_password=get_password_hash(password))
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    response = RedirectResponse("/signin", status_code=status.HTTP_302_FOUND)
-    return response
-
-
-@router.get("/signin", response_class=HTMLResponse)
-def signin_form(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse("signin.html", {"request": request})
-
-
-@router.post("/signin")
-def signin(
-    request: Request,
-    response: Response,
-    email: str = Form(...),
-    password: str = Form(...),
-    session: Session = Depends(get_session),
-) -> Response:
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user or not verify_password(password, user.hashed_password):
-        return HTMLResponse("Invalid credentials", status_code=400)
-    resp = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
-    resp.set_cookie(
-        SESSION_COOKIE, create_session_cookie(user.id), httponly=True, secure=True
-    )
-    return resp
-
-
-@router.get("/signout")
-def signout(response: Response) -> Response:
-    resp = RedirectResponse("/", status_code=status.HTTP_302_FOUND)
-    resp.delete_cookie(SESSION_COOKIE)
-    return resp
+@router.get("/items/")
+async def read_items(
+    token: Annotated[User, Depends(get_current_active_user)],
+) -> dict[str, str]:
+    return {"token": token}

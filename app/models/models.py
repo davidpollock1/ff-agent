@@ -1,16 +1,6 @@
 import datetime
 from sqlmodel import SQLModel, Field
-
-
-# User model for authentication
-class User(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    email: str = Field(index=True, unique=True, nullable=False)
-    hashed_password: str
-    is_active: bool = Field(default=True)
-    created_at: datetime.datetime = Field(
-        default_factory=datetime.datetime.utcnow, nullable=False
-    )
+from app.models.user import User
 
 
 class Event(SQLModel, table=True):
