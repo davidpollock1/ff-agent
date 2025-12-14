@@ -1,16 +1,14 @@
 import uuid
 
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field
 from pydantic import EmailStr
 
 
 class UserBase(SQLModel):
-    username: str
     email: EmailStr = Field(unique=True, index=True, max_length=255)
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
-    disabled: bool
 
 
 class User(UserBase, table=True):

@@ -1,9 +1,12 @@
 from typing import Generator
-from sqlmodel import SQLModel, create_engine, Session
-from app.models import *
-from .config import settings
+from sqlmodel import SQLModel, Session, create_engine
+from app.core.settings import settings
 
-engine = create_engine(settings.DATABASE_URL, echo=settings.ECHO_SQL, future=True)
+engine = create_engine(
+    settings.database_url,
+    echo=settings.environment == "local",
+    pool_pre_ping=True,
+)
 
 
 def get_session() -> Generator[Session, None, None]:
