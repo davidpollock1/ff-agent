@@ -1,18 +1,13 @@
 from typing import Annotated
-from app.deps import SessionDep
+from app.deps import SessionDep, CurrentUserDep
 
 from sqlmodel import select
 from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.auth.schemas import Token, UserRead, UserCreate
 from app.models.user import User
-from app.auth.service import (
-    authenticate_user,
-    create_access_token,
-    get_current_active_user,
-    get_password_hash,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-)
+from app.auth.service import auth_service
+from app.core.settings import settings
 
 router = APIRouter(prefix="/auth", tags=["users"])
 
@@ -25,7 +20,7 @@ def signup(payload: UserCreate, session: SessionDep) -> UserRead:
 
     user = User(
         email=payload.email,
-        hashed_password=get_password_hash(payload.password),
+        hashed_password=auth_service.get_password_hash(payload.password),
     )
     session.add(user)
     session.commit()
@@ -39,22 +34,22 @@ async def login_for_access_token(
     session: SessionDep,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
-    user = authenticate_user(session, form_data.username, form_data.password)
+    user = auth_service.authenticate_user(
+        session, form_data.username, form_data.password
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = ACCESS_TOKEN_EXPIRE_MINUTES
-    access_token = create_access_token(
-        sub=str(user.id), expires_minutes=access_token_expires
+    access_token = auth_service.create_access_token(
+        sub=str(user.id),
+        expires_minutes=settings.access_token_expire_minutes,
     )
     return Token(access_token=access_token, token_type="bearer")
 
 
 @router.get("/users/me", response_model=UserRead)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-) -> UserRead:
-    return current_user
+async def read_users_me(current_user: CurrentUserDep) -> UserRead:
+    return UserRead(id=current_user.id, email=current_user.email)

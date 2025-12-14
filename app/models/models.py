@@ -1,6 +1,5 @@
 import datetime
 from sqlmodel import SQLModel, Field
-from app.models.user import User
 
 
 class Event(SQLModel, table=True):
@@ -12,8 +11,8 @@ class Event(SQLModel, table=True):
 
 class League(SQLModel, table=True):
     id: int = Field(primary_key=True)
-    name: str
-    scoring_type: str
+    name: str | None = None
+    scoring_type: str | None = None
     year: int
     espn_s2: str
     swid: str
