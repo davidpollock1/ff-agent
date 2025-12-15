@@ -1,5 +1,7 @@
 import datetime
 from sqlmodel import SQLModel, Field
+from app.models.user import User  # noqa: F401
+from uuid import UUID
 
 
 class Event(SQLModel, table=True):
@@ -11,16 +13,21 @@ class Event(SQLModel, table=True):
 
 class League(SQLModel, table=True):
     id: int = Field(primary_key=True)
+    user_id: UUID = Field(foreign_key="user.id")
+    espn_league_id: str
     name: str | None = None
-    scoring_type: str | None = None
     year: int
     espn_s2: str
     swid: str
+    scoring_type: str | None = None
 
 
 class Team(SQLModel, table=True):
     id: int = Field(primary_key=True)
     league_id: int = Field(foreign_key="league.id")
+    user_id: UUID = Field(foreign_key="user.id")
+    espn_team_id: int
+    espn_league_id: str
     name: str
     owner: str
 
