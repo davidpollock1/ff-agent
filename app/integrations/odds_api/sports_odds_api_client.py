@@ -3,7 +3,11 @@ from typing import Set
 import httpx
 from urllib.parse import quote
 from datetime import datetime
-from .DTOs.odds_api_dtos import NFLEventDTO, NFLEventResponseDTO, EventOddsResponseDTO
+from app.integrations.odds_api.schemas import (
+    NFLEventDTO,
+    NFLEventResponseDTO,
+    EventOddsResponseDTO,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,8 +46,8 @@ class SportsOddsApiClient:
             response = httpx.get(request_url)
             if response.status_code == 200:
                 json_data = response.json()
-                response = EventOddsResponseDTO(**json_data)
-                return response
+                response_dto = EventOddsResponseDTO(**json_data)
+                return response_dto
         except Exception as e:
             logger.error(f"Error fetching totals odds {e}")
         return EventOddsResponseDTO()
@@ -58,8 +62,8 @@ class SportsOddsApiClient:
             response = httpx.get(request_url)
             if response.status_code == 200:
                 json_data = response.json()
-                response = EventOddsResponseDTO(**json_data)
-                return response
+                response_dto = EventOddsResponseDTO(**json_data)
+                return response_dto
         except Exception as e:
             logger.error(f"Error fetching totals odds {e}")
         return EventOddsResponseDTO()
