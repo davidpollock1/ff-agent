@@ -1,5 +1,6 @@
 import datetime
-from sqlmodel import SQLModel, Field
+from typing import List, Optional
+from sqlmodel import Relationship, SQLModel, Field
 from app.models.user import User  # noqa: F401
 from uuid import UUID
 
@@ -11,25 +12,14 @@ class Event(SQLModel, table=True):
     start_time: datetime.datetime
 
 
-class League(SQLModel, table=True):
-    id: int = Field(primary_key=True)
-    user_id: UUID = Field(foreign_key="user.id")
-    espn_league_id: str
-    name: str | None = None
-    year: int
-    espn_s2: str
-    swid: str
-    scoring_type: str | None = None
-
-
 class Team(SQLModel, table=True):
     id: int = Field(primary_key=True)
     league_id: int = Field(foreign_key="league.id")
     user_id: UUID = Field(foreign_key="user.id")
-    espn_team_id: int
-    espn_league_id: str
+    provider_team_id: int
     name: str
     owner: str
+    weeks: Optional[List["TeamWeek"]] = Relationship(back_populates="team")
 
 
 class LeaguePositionSlot(SQLModel, table=True):
@@ -40,16 +30,35 @@ class LeaguePositionSlot(SQLModel, table=True):
     is_starting_slot: bool
 
 
+class League(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    user_id: UUID = Field(foreign_key="user.id")
+    provider_league_id: str
+    name: str | None = None
+    year: int | None = None
+    espn_s2: str | None = None
+    swid: str | None = None
+    scoring_type: str | None = None
+    teams: Optional[List[Team]] = Relationship(back_populates="league")
+    position_slots: Optional[List[LeaguePositionSlot]] = Relationship(
+        back_populates="league"
+    )
+
+
 class TeamWeek(SQLModel, table=True):
     id: int = Field(primary_key=True)
     team_id: int = Field(foreign_key="team.id")
     week: int
+    players: Optional[List["TeamWeekPlayer"]] = Relationship(back_populates="team_week")
 
 
 class TeamWeekPlayer(SQLModel, table=True):
     id: int = Field(primary_key=True)
     team_week_id: int = Field(foreign_key="teamweek.id")
-    player_id: int = Field(foreign_key="playerweek.id")
+    player_week_id: int = Field(foreign_key="playerweek.id")
+    player_week: Optional["PlayerWeek"] = Relationship(
+        back_populates="team_week_players"
+    )
 
 
 class PlayerWeek(SQLModel, table=True):
@@ -60,3 +69,11 @@ class PlayerWeek(SQLModel, table=True):
     professional_team_opponent: str
     projected_points: float
     event_id: str
+
+
+class Player(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    provider_player_id: int
+    name: str
+    position: str
+    professional_team: str

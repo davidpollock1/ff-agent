@@ -46,3 +46,8 @@ class LeagueWithTeamCreate(BaseModel):
 class LeagueWithTeamRead(BaseModel):
     league: LeagueRead
     team: TeamRead
+
+
+class SyncTeamWeek(BaseModel):
+    team_id: int
+    week: int

@@ -6,6 +6,7 @@ from app.league.schemas import (
     LeagueWithTeamRead,
     LeagueWithTeamCreate,
     TeamRead,
+    SyncTeamWeek,
 )
 from app.league.service import league_service
 
@@ -54,6 +55,8 @@ def get_league(league_id: int, session: SessionDep) -> LeagueRead:
     return LeagueRead.model_validate(league_service.get_league(session, league_id))
 
 
-@router.get("/leagues/sync/{league_id}")
-def sync_league(league_id: int, session: SessionDep) -> LeagueRead:
-    return LeagueRead.model_validate(league_service.sync_league(session, league_id))
+@router.post("/teamweek/sync/")
+def sync_league(data: SyncTeamWeek, session: SessionDep) -> LeagueRead:
+    return LeagueRead.model_validate(
+        league_service.sync_team_week(session, data.team_id, data.week)
+    )
