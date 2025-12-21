@@ -19,7 +19,7 @@ def create_league_config(
 ) -> LeagueRead:
     league_config = league_service.create_league(
         session,
-        espn_league_id=data.espn_league_id,
+        provider_league_id=data.provider_league_id,
         name=data.name,
         year=data.year,
         espn_s2=data.espn_s2,
@@ -36,12 +36,12 @@ def create_league_team(
 ) -> LeagueWithTeamRead:
     league, team = league_service.create_league_team(
         session=session,
-        espn_league_id=data.league.espn_league_id,
+        provider_league_id=data.league.provider_league_id,
         name=data.league.name,
         year=data.league.year,
         espn_s2=data.league.espn_s2,
         swid=data.league.swid,
-        team_id=data.team.espn_team_id,
+        provider_team_id=data.team.provider_team_id,
         user=current_user,
     )
     league_read = LeagueRead.model_validate(league)
@@ -56,7 +56,5 @@ def get_league(league_id: int, session: SessionDep) -> LeagueRead:
 
 
 @router.post("/teamweek/sync/")
-def sync_league(data: SyncTeamWeek, session: SessionDep) -> LeagueRead:
-    return LeagueRead.model_validate(
-        league_service.sync_team_week(session, data.team_id, data.week)
-    )
+def sync_league(data: SyncTeamWeek, session: SessionDep) -> bool:
+    return league_service.sync_team_week(session, data.team_id, data.week)

@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlmodel import Session, select
-from app.models.models import League, Team, TeamWeek, TeamWeekPlayer
+from app.models.models import League, Team, TeamWeek, TeamWeekPlayer, Player, PlayerWeek
 from app.models.user import User
 from app.integrations.espn.client import EspnClient
 from sqlalchemy.dialects.postgresql import insert
@@ -14,7 +14,7 @@ class LeagueService:
         self,
         session: Session,
         *,
-        espn_league_id: str,
+        provider_league_id: str,
         name: str,
         year: int,
         espn_s2: str,
@@ -23,7 +23,7 @@ class LeagueService:
     ) -> League:
         league = League(
             name=name,
-            espn_league_id=espn_league_id,
+            provider_league_id=provider_league_id,
             year=year,
             espn_s2=espn_s2,
             swid=swid,
@@ -40,17 +40,17 @@ class LeagueService:
         self,
         session: Session,
         *,
-        espn_league_id: str,
+        provider_league_id: str,
         name: str,
         year: int,
         espn_s2: str,
         swid: str,
-        team_id: int,
+        provider_team_id: int,
         user: User,
     ) -> tuple[League, Team]:
         league = self.create_league(
             session=session,
-            espn_league_id=espn_league_id,
+            provider_league_id=provider_league_id,
             name=name,
             year=year,
             espn_s2=espn_s2,
@@ -60,21 +60,26 @@ class LeagueService:
         session.flush()
 
         espn_league = self._espn.get_league(
-            league_id=league.espn_league_id,
-            year=league.year,
+            league_id=league.provider_league_id,
+            year=league.year if league.year is not None else datetime.now().year,
             espn_s2=league.espn_s2,
             swid=league.swid,
         )
 
-        espn_team = espn_league.teams[team_id]
+        espn_team = None
+        for e_team in espn_league.teams:
+            if e_team.team_id == provider_team_id:
+                espn_team = e_team
+
+        if espn_team is None:
+            return League(), Team()
 
         team = Team(
             league_id=league.id,
             user_id=user.id,
             name=espn_team.team_name,
             owner=espn_team.owners[0].get("displayName"),
-            espn_team_id=espn_team.team_id,
-            espn_league_id=league.espn_league_id,
+            provider_team_id=espn_team.team_id,
         )
 
         session.add(team)
@@ -87,27 +92,32 @@ class LeagueService:
         return session.exec(select(League).where(League.id == id)).first()
 
     # TODO: Refactor
-    def sync_team_week(
-        self, session: Session, team_id: int, week: int
-    ) -> League | None:
+    def sync_team_week(self, session: Session, team_id: int, week: int) -> bool:
         # get team
         team = session.exec(select(Team).where(Team.id == team_id)).first()
         if not team:
-            return None
+            return False
 
         # create team week
-        team_week = TeamWeek(team_id=team_id, week=week)
-        session.add(team_week)
-        session.flush()
+        team_week = session.exec(
+            select(TeamWeek)
+            .where(TeamWeek.team_id == team_id)
+            .where(TeamWeek.week == week)
+        ).first()
+
+        if team_week is None:
+            team_week = TeamWeek(team_id=team_id, week=week)
+            session.add(team_week)
+            session.flush()
 
         # get league
         league = self.get_league(session, team.league_id)
         if not league:
-            return None
+            return False
 
         espn_league = self._espn.get_league(
             league_id=league.provider_league_id,
-            year=league.year,
+            year=league.year if league.year is not None else datetime.now().year,
             espn_s2=league.espn_s2,
             swid=league.swid,
         )
@@ -115,8 +125,12 @@ class LeagueService:
         # get espn team
         espn_team = None
         for e_team in espn_league.teams:
-            if e_team.id == team.provider_team_id:
+            if e_team.team_id == int(team.provider_team_id):
                 espn_team = e_team
+                break
+
+        if espn_team is None:
+            return False
 
         box_scores = espn_league.box_scores(week)
 
@@ -124,21 +138,23 @@ class LeagueService:
             (
                 bs
                 for bs in box_scores
-                if bs.home_team == espn_team or bs.away_team == espn_team
-            )
+                if bs.home_team.team_id == int(team.provider_team_id)
+                or bs.away_team.team_id == int(team.provider_team_id)
+            ),
+            None,
         )
 
         if box_score is None:
-            return None
+            return False
 
-        is_away = box_score.away_team == team_id
+        is_away = box_score.away_team.team_id == int(team.provider_team_id)
         lineup = box_score.away_lineup if is_away else box_score.home_lineup
 
-        opponent_projected = (
-            box_score.home_projected if is_away else box_score.away_projected
-        )
+        # opponent_projected = (
+        #     box_score.home_projected if is_away else box_score.away_projected
+        # )
 
-        all_player_ids = [player.playerId for player in espn_team]
+        all_player_ids = [player.playerId for player in lineup]
         players_result = espn_league.player_info(playerId=all_player_ids)
 
         all_players_info = players_result if isinstance(players_result, list) else []
@@ -146,13 +162,72 @@ class LeagueService:
             player.playerId: player.proTeam for player in all_players_info
         }
 
-        team_week_player_list = []
         for player in lineup:
-            team_week_player_list.append(
-                TeamWeekPlayer(team_week_id=team_week.id, player_id=player.playerId)
+            new_player = Player(
+                provider_player_id=player.playerId,
+                name=player.name,
+                position=player.position,
+                professional_team=player_info_lookup.get(player.playerId, ""),
             )
 
-        return league
+            player_week = PlayerWeek(
+                professional_team_opponent=player.pro_opponent,
+                projected_points=player.projected_points,
+                player=new_player,
+            )
+
+            team_week_player = TeamWeekPlayer(
+                team_week_id=team_week.id, player_week=player_week
+            )
+
+            session.add(new_player)
+            session.add(player_week)
+            session.add(team_week_player)
+
+        session.commit()
+        return True
+
+    def upsert_players(self, session: Session, players: list[Player]) -> None:
+        if not players:
+            return
+
+        stmt = insert(Player).values(
+            [player.model_dump(exclude_unset=True) for player in players]
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["provider_player_id"],
+            set_={
+                "name": stmt.excluded.name,
+                "position": stmt.excluded.position,
+                "professional_team": stmt.excluded.professional_team,
+            },
+        )
+
+        session.execute(stmt)
+        session.commit()
+
+    def upsert_playerweeks(
+        self, session: Session, playerweeks: list[PlayerWeek]
+    ) -> None:
+        if not playerweeks:
+            return
+
+        stmt = insert(PlayerWeek).values(
+            [pw.model_dump(exclude_unset=True) for pw in playerweeks]
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["provider_player_id", "event_id"],
+            set_={
+                "name": stmt.excluded.name,
+                "position": stmt.excluded.position,
+                "professional_team": stmt.excluded.professional_team,
+                "professional_team_opponent": stmt.excluded.professional_team_opponent,
+                "projected_points": stmt.excluded.projected_points,
+            },
+        )
+
+        session.execute(stmt)
+        session.commit()
 
 
 league_service = LeagueService(EspnClient())
